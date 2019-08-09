@@ -33,7 +33,8 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       : parent_game_(parent_game) {}
 
   std::vector<int> Shape() const override;
-  std::vector<int> Encode(const HanabiObservation& obs) const override;
+  std::vector<int> Encode(const HanabiObservation& obs,
+                          bool show_own_cards=false) const override;
 
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;

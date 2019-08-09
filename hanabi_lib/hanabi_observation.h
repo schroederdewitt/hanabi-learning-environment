@@ -30,7 +30,7 @@ namespace hanabi_learning_env {
 // Agent observation of a HanabiState
 class HanabiObservation {
  public:
-  HanabiObservation(const HanabiState& state, int observing_player);
+  HanabiObservation(const HanabiState& state, int observing_player, bool show_cards=false);
 
   std::string ToString() const;
 
