@@ -62,7 +62,7 @@ int HandsSectionLength(const HanabiGame& game) {
 int EncodeHands(const HanabiGame& game,
                 const HanabiObservation& obs,
                 int start_offset,
-                std::vector<int>* encoding,
+                std::vector<float>* encoding,
                 bool show_own_cards) {
   int bits_per_card = BitsPerCard(game);
   int num_ranks = game.NumRanks();
@@ -137,7 +137,7 @@ int BoardSectionLength(const HanabiGame& game) {
 // For example, life tokens could be: 000 (0), 100 (1), 110 (2), 111 (3).
 // Returns the number of entries written to the encoding.
 int EncodeBoard(const HanabiGame& game, const HanabiObservation& obs,
-                int start_offset, std::vector<int>* encoding) {
+                int start_offset, std::vector<float>* encoding) {
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
   int num_players = game.NumPlayers();
@@ -204,7 +204,7 @@ int DiscardSectionLength(const HanabiGame& game) { return game.MaxDeckSize(); }
 //   - the highest rank card has been discarded
 // Returns the number of entries written to the encoding.
 int EncodeDiscards(const HanabiGame& game, const HanabiObservation& obs,
-                   int start_offset, std::vector<int>* encoding) {
+                   int start_offset, std::vector<float>* encoding) {
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
 
@@ -252,7 +252,7 @@ int LastActionSectionLength(const HanabiGame& game) {
 //  - Card played/discarded (<num_colors> * <num_ranks> bits; one-hot)
 // Returns the number of entries written to the encoding.
 int EncodeLastAction(const HanabiGame& game, const HanabiObservation& obs,
-                     int start_offset, std::vector<int>* encoding) {
+                     int start_offset, std::vector<float>* encoding) {
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
   int num_players = game.NumPlayers();
@@ -382,7 +382,7 @@ int CardKnowledgeSectionLength(const HanabiGame& game) {
 // (<num_colors> * <num_ranks> + <num_colors> + <num_ranks>) bits.
 // Returns the number of entries written to the encoding.
 int EncodeCardKnowledge(const HanabiGame& game, const HanabiObservation& obs,
-                        int start_offset, std::vector<int>* encoding) {
+                        int start_offset, std::vector<float>* encoding) {
   int bits_per_card = BitsPerCard(game);
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
@@ -436,6 +436,93 @@ int EncodeCardKnowledge(const HanabiGame& game, const HanabiObservation& obs,
   return offset - start_offset;
 }
 
+int EncodeV0Belief(const HanabiGame& game, const HanabiObservation& obs,
+                   int start_offset, std::vector<float>* encoding) {
+  int bits_per_card = BitsPerCard(game);
+  int num_colors = game.NumColors();
+  int num_ranks = game.NumRanks();
+  int num_players = game.NumPlayers();
+  int hand_size = game.HandSize();
+
+  std::vector<int> card_count(num_colors * num_ranks, 0);
+  int total_count = 0;
+  // full deck card count
+  for (int color = 0; color < game.NumColors(); ++color) {
+    for (int rank = 0; rank < game.NumRanks(); ++rank) {
+      auto count = game.NumberCardInstances(color, rank);
+      card_count[color * num_ranks + rank] = count;
+      total_count += count;
+    }
+  }
+  // remove discard
+  for (const HanabiCard& card : obs.DiscardPile()) {
+    --card_count[card.Color() * num_ranks + card.Rank()];
+    --total_count;
+  }
+  // remove fireworks on board
+  const std::vector<int>& fireworks = obs.Fireworks();
+  for (int c = 0; c < num_colors; ++c) {
+    // fireworks[color] is the number of successfully played <color> cards.
+    // If some were played, one-hot encode the highest (0-indexed) rank played
+    if (fireworks[c] > 0) {
+      for (int rank = 0; rank < fireworks[c]; ++rank) {
+        --card_count[c * num_ranks + rank];
+        --total_count;
+      }
+    }
+  }
+
+  {
+    // sanity check
+    const std::vector<HanabiHand>& hands = obs.Hands();
+    int total_hand_size = 0;
+    for (const auto& hand : hands) {
+      total_hand_size += hand.Cards().size();
+    }
+    if(total_count != obs.DeckSize() + total_hand_size) {
+      std::cout << "size mismatch: " << total_count
+                << " vs " << obs.DeckSize() + total_hand_size << std::endl;
+      assert(false);
+    }
+  }
+
+  // card knowledge
+  const int len = EncodeCardKnowledge(game, obs, start_offset, encoding);
+  const int player_offset = len / num_players;
+  const int per_card_offset = len / hand_size / num_players;
+  assert(per_card_offset == num_colors * num_ranks + num_colors + num_ranks);
+
+  const std::vector<HanabiHand>& hands = obs.Hands();
+  for (int player_id = 0; player_id < num_players; ++player_id) {
+    int num_cards = hands[player_id].Cards().size();
+    for (int card_idx = 0; card_idx < num_cards; ++card_idx) {
+      float total = 0;
+      for (int i = 0; i < num_colors * num_ranks; ++i) {
+        int offset = (start_offset
+                      + player_offset * player_id
+                      + card_idx * per_card_offset
+                      + i);
+        // std::cout << offset << ", " << len << std::endl;
+        assert(offset - start_offset < len);
+        (*encoding)[offset] *= card_count[i];
+        total += (*encoding)[offset];
+      }
+      if (total <= 0) {
+        // const std::vector<HanabiHand>& hands = obs.Hands();
+        std::cout << hands[0].Cards().size() << std::endl;
+        std::cout << hands[1].Cards().size() << std::endl;
+        std::cout << "total = 0 " << std::endl;
+        assert(false);
+      }
+      for (int i = 0; i < num_colors * num_ranks; ++i) {
+        int offset = start_offset + card_idx * per_card_offset + i;
+        (*encoding)[offset] /= total;
+      }
+    }
+  }
+  return len;
+}
+
 }  // namespace
 
 std::vector<int> CanonicalObservationEncoder::Shape() const {
@@ -448,10 +535,10 @@ std::vector<int> CanonicalObservationEncoder::Shape() const {
                : CardKnowledgeSectionLength(*parent_game_))};
 }
 
-std::vector<int> CanonicalObservationEncoder::Encode(
+std::vector<float> CanonicalObservationEncoder::Encode(
     const HanabiObservation& obs, bool show_own_cards) const {
   // Make an empty bit string of the proper size.
-  std::vector<int> encoding(FlatLength(Shape()), 0);
+  std::vector<float> encoding(FlatLength(Shape()), 0);
   // std::cout << "encoding shape: " << encoding.size() << std::endl;
 
   // This offset is an index to the start of each section of the bit vector.
@@ -466,7 +553,8 @@ std::vector<int> CanonicalObservationEncoder::Encode(
   offset += EncodeLastAction(*parent_game_, obs, offset, &encoding);
   // std::cout << "last action -> " << offset << std::endl;
   if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
-    offset += EncodeCardKnowledge(*parent_game_, obs, offset, &encoding);
+    // offset += EncodeCardKnowledge(*parent_game_, obs, offset, &encoding);
+    offset += EncodeV0Belief(*parent_game_, obs, offset, &encoding);
     // std::cout << "knowledge -> " << offset << std::endl;
   }
   // std::cout << "======" << std::endl;

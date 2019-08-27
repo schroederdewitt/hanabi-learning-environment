@@ -59,8 +59,8 @@ GameResult SimulateGame(const hanabi_learning_env::HanabiGame& game,
 
     auto obs = hanabi_learning_env::HanabiObservation(state, state.CurPlayer());
     hanabi_learning_env::CanonicalObservationEncoder encoder(&game);
-    std::vector<int> vecObs = encoder.Encode(obs);
-    std::cout << ">>>vec size: " << vecObs.size() << std::endl;
+    // std::vector<int> vecObs = encoder.Encode(obs);
+    // std::cout << ">>>vec size: " << vecObs.size() << std::endl;
 
     auto legal_moves = state.LegalMoves(state.CurPlayer());
     std::uniform_int_distribution<std::mt19937::result_type> dist(
