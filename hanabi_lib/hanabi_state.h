@@ -43,6 +43,10 @@ class HanabiState {
       return card_count_[CardToIndex(color, rank)];
     }
 
+    std::vector<int> DeckHistory() const {
+      return deck_history_;
+    }
+
    private:
     int CardToIndex(int color, int rank) const {
       return color * num_ranks_ + rank;
@@ -56,6 +60,7 @@ class HanabiState {
     std::vector<int> card_count_;
     int total_count_ = -1;  // Total number of cards available to be dealt out.
     int num_ranks_ = -1;    // From game.NumRanks(), used to map card to index.
+    std::vector<int> deck_history_;
   };
 
   enum EndOfGameType {
@@ -106,6 +111,10 @@ class HanabiState {
   // Sequence of moves from beginning of game. Stored as <move, actor>.
   const std::vector<HanabiHistoryItem>& MoveHistory() const {
     return move_history_;
+  }
+
+  std::vector<int> DeckHistory() const {
+    return deck_.DeckHistory();
   }
 
  private:

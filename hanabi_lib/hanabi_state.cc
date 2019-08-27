@@ -73,6 +73,7 @@ HanabiCard HanabiState::HanabiDeck::DealCard(std::mt19937* rng) {
   assert(card_count_[index] > 0);
   --card_count_[index];
   --total_count_;
+  deck_history_.push_back(index);
   return HanabiCard(IndexToColor(index), IndexToRank(index));
 }
 
@@ -84,6 +85,7 @@ HanabiCard HanabiState::HanabiDeck::DealCard(int color, int rank) {
   assert(card_count_[index] > 0);
   --card_count_[index];
   --total_count_;
+  deck_history_.push_back(index);
   return HanabiCard(IndexToColor(index), IndexToRank(index));
 }
 
