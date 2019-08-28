@@ -515,7 +515,10 @@ int EncodeV0Belief(const HanabiGame& game, const HanabiObservation& obs,
         assert(false);
       }
       for (int i = 0; i < num_colors * num_ranks; ++i) {
-        int offset = start_offset + card_idx * per_card_offset + i;
+        int offset = (start_offset
+                      + player_offset * player_id
+                      + card_idx * per_card_offset
+                      + i);
         (*encoding)[offset] /= total;
       }
     }
