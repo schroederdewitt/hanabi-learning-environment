@@ -25,6 +25,9 @@
 #include "hanabi_history_item.h"
 #include "hanabi_move.h"
 
+#include <iostream>
+#include <sstream>
+
 namespace hanabi_learning_env {
 
 constexpr int kChancePlayerId = -1;
@@ -43,8 +46,24 @@ class HanabiState {
       return card_count_[CardToIndex(color, rank)];
     }
 
-    std::vector<int> DeckHistory() const {
-      return deck_history_;
+    std::vector<std::string> DeckHistory(std::mt19937* rng) {
+      // std::cout << "before dealing all: " << deck_history_.size() << std::endl;
+      // deal all cards to finish a deck
+      while (!Empty()) {
+        DealCard(rng);
+      }
+      // std::cout << "after dealing all: " << deck_history_.size() << std::endl;
+      const char colornames[] = "roygb";
+      std::vector<std::string> deck;
+      for (auto i : deck_history_) {
+        char color = colornames[IndexToColor(i)];
+        int value = IndexToRank(i) + 1;
+        std::stringstream ss;
+        ss << value << color;
+        deck.push_back(ss.str());
+      }
+
+      return deck;
     }
 
    private:
@@ -113,8 +132,8 @@ class HanabiState {
     return move_history_;
   }
 
-  std::vector<int> DeckHistory() const {
-    return deck_.DeckHistory();
+  std::vector<std::string> DeckHistory() {
+    return deck_.DeckHistory(&(parent_game_->rng_));
   }
 
  private:

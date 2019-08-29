@@ -85,7 +85,7 @@ class HanabiGame {
   // Get the first player to act. Might be randomly generated at each call.
   int GetSampledStartPlayer() const;
 
- private:
+ // private:
   // Calculating max moves by move type.
   int MaxDiscardMoves() const { return hand_size_; }
   int MaxPlayMoves() const { return hand_size_; }
