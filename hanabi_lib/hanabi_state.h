@@ -133,7 +133,7 @@ class HanabiState {
   }
 
   std::vector<std::string> DeckHistory() {
-    return deck_.DeckHistory(&(parent_game_->rng_));
+    return deck_.DeckHistory(parent_game_->rng());
   }
 
  private:

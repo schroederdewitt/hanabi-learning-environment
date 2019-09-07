@@ -85,7 +85,13 @@ class HanabiGame {
   // Get the first player to act. Might be randomly generated at each call.
   int GetSampledStartPlayer() const;
 
- // private:
+  bool BombZero() const { return bomb_zero_; }
+
+  std::mt19937* rng() const {
+    return &rng_;
+  }
+
+ private:
   // Calculating max moves by move type.
   int MaxDiscardMoves() const { return hand_size_; }
   int MaxPlayMoves() const { return hand_size_; }
@@ -111,6 +117,7 @@ class HanabiGame {
   int seed_ = -1;
   bool random_start_player_ = false;
   AgentObservationType observation_type_ = kCardKnowledge;
+  bool bomb_zero_ = false;
   mutable std::mt19937 rng_;
 };
 
