@@ -34,7 +34,8 @@ class CanonicalObservationEncoder : public ObservationEncoder {
 
   std::vector<int> Shape() const override;
   std::vector<float> Encode(const HanabiObservation& obs,
-                          bool show_own_cards=false) const override;
+                            const std::vector<float>* eps=nullptr,
+                            bool show_own_cards=false) const override;
 
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;

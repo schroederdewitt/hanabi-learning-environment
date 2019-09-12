@@ -54,6 +54,37 @@ int HandsSectionLength(const HanabiGame& game) {
          game.NumPlayers();
 }
 
+// encode eps: [0, 1) into normalized log range
+int EncodeEps(const HanabiGame& game,
+              const HanabiObservation& obs,
+              int start_offset,
+              const std::vector<float>* eps,
+              std::vector<float>* encoding) {
+  const int num_players = game.NumPlayers();
+  const float tiny = 1e-6;
+  const float log_tiny = std::log(tiny);
+
+  int observing_player = obs.ObservingPlayer();
+  int code_offset = start_offset;
+  if (eps != nullptr) {
+    assert(eps->size() == game.NumPlayers());
+  }
+  for (int offset = 1; offset < game.NumPlayers(); ++offset) {
+    float player_eps = 0;
+    if (eps != nullptr) {
+      player_eps = (*eps)[(offset + observing_player) % num_players];
+    }
+    player_eps += tiny;
+
+    // TODO: magical number 19 to make it [0, 1)
+    float normed = (std::log(player_eps) - log_tiny) / (-log_tiny);
+    assert(normed >= 0 && normed < 1);
+    (*encoding)[code_offset] = normed;
+    ++code_offset;
+  }
+  return code_offset - start_offset;
+}
+
 // Enocdes cards in all other player's hands (excluding our unknown hand),
 // and whether the hand is missing a card for all players (when deck is empty.)
 // Each card in a hand is encoded with a one-hot representation using
@@ -529,17 +560,23 @@ int EncodeV0Belief(const HanabiGame& game, const HanabiObservation& obs,
 }  // namespace
 
 std::vector<int> CanonicalObservationEncoder::Shape() const {
-  return {HandsSectionLength(*parent_game_) +
+  int l = HandsSectionLength(*parent_game_) +
           BoardSectionLength(*parent_game_) +
           DiscardSectionLength(*parent_game_) +
           LastActionSectionLength(*parent_game_) +
           (parent_game_->ObservationType() == HanabiGame::kMinimal
                ? 0
-               : CardKnowledgeSectionLength(*parent_game_))};
+               : CardKnowledgeSectionLength(*parent_game_));
+  if (parent_game_->FeedEps()) {
+    l += parent_game_->NumPlayers() - 1;
+  }
+  return {l};
 }
 
 std::vector<float> CanonicalObservationEncoder::Encode(
-    const HanabiObservation& obs, bool show_own_cards) const {
+    const HanabiObservation& obs,
+    const std::vector<float>* eps,
+    bool show_own_cards) const {
   // Make an empty bit string of the proper size.
   std::vector<float> encoding(FlatLength(Shape()), 0);
   // std::cout << "encoding shape: " << encoding.size() << std::endl;
@@ -547,20 +584,17 @@ std::vector<float> CanonicalObservationEncoder::Encode(
   // This offset is an index to the start of each section of the bit vector.
   // It is incremented at the end of each section.
   int offset = 0;
-  offset += EncodeHands(*parent_game_, obs, offset, &encoding, show_own_cards);
-  // std::cout << "hands -> " << offset << std::endl;
-  offset += EncodeBoard(*parent_game_, obs, offset, &encoding);
-  // std::cout << "board -> " << offset << std::endl;
-  offset += EncodeDiscards(*parent_game_, obs, offset, &encoding);
-  // std::cout << "discards -> " << offset << std::endl;
-  offset += EncodeLastAction(*parent_game_, obs, offset, &encoding);
-  // std::cout << "last action -> " << offset << std::endl;
-  if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
-    // offset += EncodeCardKnowledge(*parent_game_, obs, offset, &encoding);
-    offset += EncodeV0Belief(*parent_game_, obs, offset, &encoding);
-    // std::cout << "knowledge -> " << offset << std::endl;
+  if (parent_game_->FeedEps()) {
+    offset += EncodeEps(*parent_game_, obs, offset, eps, &encoding);
   }
-  // std::cout << "======" << std::endl;
+
+  offset += EncodeHands(*parent_game_, obs, offset, &encoding, show_own_cards);
+  offset += EncodeBoard(*parent_game_, obs, offset, &encoding);
+  offset += EncodeDiscards(*parent_game_, obs, offset, &encoding);
+  offset += EncodeLastAction(*parent_game_, obs, offset, &encoding);
+  if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
+    offset += EncodeV0Belief(*parent_game_, obs, offset, &encoding);
+  }
 
   assert(offset == encoding.size());
   return encoding;

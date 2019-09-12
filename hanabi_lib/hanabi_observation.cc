@@ -54,6 +54,7 @@ HanabiObservation::HanabiObservation(const HanabiState& state,
                                      bool show_cards)
     : cur_player_offset_(PlayerToOffset(state.CurPlayer(), observing_player,
                                         state.ParentGame()->NumPlayers())),
+      observing_player_(observing_player),
       discard_pile_(state.DiscardPile()),
       fireworks_(state.Fireworks()),
       deck_size_(state.Deck().Size()),
