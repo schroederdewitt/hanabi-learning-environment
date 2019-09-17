@@ -38,6 +38,8 @@ class ObservationEncoder {
                                     const std::vector<float>* eps=nullptr,
                                     bool show_own_cards=false) const = 0;
 
+  virtual std::vector<float> EncodeLastAction(const HanabiObservation& obs) const = 0;
+
   // Return the type of this encoder.
   virtual Type type() const = 0;
 };

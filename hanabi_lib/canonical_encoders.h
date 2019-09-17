@@ -37,6 +37,8 @@ class CanonicalObservationEncoder : public ObservationEncoder {
                             const std::vector<float>* eps=nullptr,
                             bool show_own_cards=false) const override;
 
+  std::vector<float> EncodeLastAction(const HanabiObservation& obs) const override;
+
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;
   }
@@ -44,6 +46,8 @@ class CanonicalObservationEncoder : public ObservationEncoder {
  private:
   const HanabiGame* parent_game_ = nullptr;
 };
+
+int LastActionSectionLength(const HanabiGame& game);
 
 }  // namespace hanabi_learning_env
 
