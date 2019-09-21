@@ -801,7 +801,7 @@ std::vector<float> CanonicalObservationEncoder::Encode(
   offset += EncodeDiscards(*parent_game_, obs, offset, &encoding);
   offset += EncodeLastAction_(*parent_game_, obs, offset, &encoding);
   if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
-    offset += EncodeV1Belief_(*parent_game_, obs, offset, &encoding);
+    offset += EncodeV0Belief_(*parent_game_, obs, offset, &encoding);
   }
 
   assert(offset == encoding.size());
