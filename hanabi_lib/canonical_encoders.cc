@@ -85,6 +85,44 @@ int EncodeEps(const HanabiGame& game,
   return code_offset - start_offset;
 }
 
+int EncodeOwnHand_(const HanabiGame& game,
+                  const HanabiObservation& obs,
+                  int start_offset,
+                  std::vector<float>* encoding) {
+  int bits_per_card = 3; // BitsPerCard(game);
+  int num_ranks = game.NumRanks();
+  // int hand_size = game.HandSize();
+
+  int offset = start_offset;
+  const std::vector<HanabiHand>& hands = obs.Hands();
+  const int player = 0;
+  const std::vector<HanabiCard>& cards = hands[player].Cards();
+  // int num_cards = 0;
+
+  const std::vector<int>& fireworks = obs.Fireworks();
+  for (const HanabiCard& card : cards) {
+    // Only a player's own cards can be invalid/unobserved.
+    // assert(card.IsValid());
+    assert(card.Color() < game.NumColors());
+    assert(card.Rank() < num_ranks);
+    assert(card.IsValid());
+    // std::cout << offset << CardIndex(card.Color(), card.Rank(), num_ranks) << std::endl;
+    // std::cout << card.Color() << ", " << card.Rank() << ", " << num_ranks << std::endl;
+    auto firework = fireworks[card.Color()];
+    if (card.Rank() == firework) {
+      (*encoding)[offset] = 1;
+    } else if (card.Rank() < firework) {
+      (*encoding)[offset + 1] = 1;
+    } else {
+      (*encoding)[offset + 2] = 1;
+    }
+
+    offset += bits_per_card;
+  }
+
+  return offset;
+}
+
 // Enocdes cards in all other player's hands (excluding our unknown hand),
 // and whether the hand is missing a card for all players (when deck is empty.)
 // Each card in a hand is encoded with a one-hot representation using
@@ -778,6 +816,18 @@ std::vector<float> CanonicalObservationEncoder::EncodeCardCount(
   for (size_t i = 0; i < cc.size(); ++i) {
     encoding.push_back((float)cc[i]);
   }
+  return encoding;
+}
+
+std::vector<float> CanonicalObservationEncoder::EncodeOwnHand(
+    const HanabiObservation& obs) const {
+  // int len = parent_game_->HandSize() * BitsPerCard(*parent_game_);
+  // hard code 5 cards, empty slot will be all zero
+  int len = 5 * 3;
+  // std::cout << "len: " << len << std::endl;
+  std::vector<float> encoding(len, 0);
+  int offset = EncodeOwnHand_(*parent_game_, obs, 0, &encoding);
+  assert(offset <= len);
   return encoding;
 }
 

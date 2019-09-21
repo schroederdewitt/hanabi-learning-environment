@@ -37,11 +37,14 @@ class CanonicalObservationEncoder : public ObservationEncoder {
                             const std::vector<float>* eps=nullptr,
                             bool show_own_cards=false) const override;
 
-  std::vector<float> EncodeLastAction(const HanabiObservation& obs) const override;
   std::vector<float> EncodeV0Belief(const HanabiObservation& obs) const;
   std::vector<float> EncodeV1Belief(const HanabiObservation& obs) const;
   std::vector<float> EncodeHandMask(const HanabiObservation& obs) const;
   std::vector<float> EncodeCardCount(const HanabiObservation& obs) const;
+
+  std::vector<float> EncodeLastAction(const HanabiObservation& obs) const;
+
+  std::vector<float> EncodeOwnHand(const HanabiObservation& obs) const;
 
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;
