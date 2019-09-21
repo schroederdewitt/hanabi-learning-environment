@@ -455,13 +455,9 @@ int EncodeCardKnowledge(const HanabiGame& game, const HanabiObservation& obs,
   return offset - start_offset;
 }
 
-int EncodeV0Belief(const HanabiGame& game, const HanabiObservation& obs,
-                   int start_offset, std::vector<float>* encoding) {
-  int bits_per_card = BitsPerCard(game);
+std::vector<int> ComputeCardCount(const HanabiGame& game, const HanabiObservation& obs) {
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
-  int num_players = game.NumPlayers();
-  int hand_size = game.HandSize();
 
   std::vector<int> card_count(num_colors * num_ranks, 0);
   int total_count = 0;
@@ -504,6 +500,24 @@ int EncodeV0Belief(const HanabiGame& game, const HanabiObservation& obs,
       assert(false);
     }
   }
+  return card_count;
+}
+
+int EncodeV0Belief_(const HanabiGame& game,
+                   const HanabiObservation& obs,
+                   int start_offset,
+                   std::vector<float>* encoding,
+                   std::vector<int>* ret_card_count=nullptr) {
+  // int bits_per_card = BitsPerCard(game);
+  int num_colors = game.NumColors();
+  int num_ranks = game.NumRanks();
+  int num_players = game.NumPlayers();
+  int hand_size = game.HandSize();
+
+  std::vector<int> card_count = ComputeCardCount(game, obs);
+  if (ret_card_count != nullptr) {
+    *ret_card_count = card_count;
+  }
 
   // card knowledge
   const int len = EncodeCardKnowledge(game, obs, start_offset, encoding);
@@ -545,6 +559,131 @@ int EncodeV0Belief(const HanabiGame& game, const HanabiObservation& obs,
   return len;
 }
 
+int EncodeV1Belief_(const HanabiGame& game,
+                   const HanabiObservation& obs,
+                   int start_offset,
+                   std::vector<float>* encoding) {
+  const int num_iters = 100;
+  const float weight = 0.1;
+
+  // int bits_per_card = BitsPerCard(game);
+  int num_colors = game.NumColors();
+  int num_ranks = game.NumRanks();
+  int num_players = game.NumPlayers();
+  int hand_size = game.HandSize();
+  const std::vector<HanabiHand>& hands = obs.Hands();
+
+  std::vector<float> card_knowledge(CardKnowledgeSectionLength(game), 0);
+  int len = EncodeCardKnowledge(game, obs, 0, &card_knowledge);
+  assert(len == card_knowledge.size());
+
+  std::vector<float> v0_belief(card_knowledge);
+  std::vector<int> card_count;
+  len = EncodeV0Belief_(game, obs, 0, &v0_belief, &card_count);
+  assert(len == card_knowledge.size());
+
+  const int player_offset = len / num_players;
+  const int per_card_offset = len / hand_size / num_players;
+  assert(per_card_offset == num_colors * num_ranks + num_colors + num_ranks);
+
+  std::vector<float> v1_belief(v0_belief);
+  std::vector<float> new_v1_belief(v1_belief);
+  std::vector<float> total_cards(card_count.size());
+
+  assert(total_cards.size() == int(num_colors * num_ranks));
+  for (int step = 0; step < num_iters; ++step) {
+    // first compute total card remaining by excluding info from belief
+    for (int i = 0; i < num_colors * num_ranks; ++i) {
+      total_cards[i] = card_count[i];
+      for (int player_id = 0; player_id < num_players; ++player_id) {
+        int num_cards = hands[player_id].Cards().size();
+        for (int card_idx = 0; card_idx < num_cards; ++card_idx) {
+          int offset = player_offset * player_id + card_idx * per_card_offset + i;
+          assert(offset < (int)v1_belief.size());
+          total_cards[i] -= v1_belief[offset];
+        }
+      }
+    }
+    // for (auto c : total_cards) {
+    //   std::cout << c << ", ";
+    // }
+    // std::cout << std::endl;
+
+    // compute new belief
+    for (int player_id = 0; player_id < num_players; ++player_id) {
+      int num_cards = hands[player_id].Cards().size();
+      for (int card_idx = 0; card_idx < num_cards; ++card_idx) {
+        // float total = 0;
+        int base_offset = player_offset * player_id + card_idx * per_card_offset;
+        // if (player_id == 0 && card_idx == 0) {
+        //   std::cout << "before norm" << std::endl;
+        // }
+        for (int i = 0; i < num_colors * num_ranks; ++i) {
+          int offset = base_offset + i;
+          assert(offset < (int)v1_belief.size());
+          float p = total_cards[i] + v1_belief[offset];
+          // if (player_id == 0 && card_idx == 0) {
+          //   std::cout << p << ", ";
+          // }
+          p = std::max(p, (float)0.0);
+          new_v1_belief[offset] = p * card_knowledge[offset];
+          // total += new_v1_belief[offset];
+        }
+        // // std::cout << std::endl;
+        // if (total <= 0) {
+        //   // const std::vector<HanabiHand>& hands = obs.Hands();
+        //   // std::cout << hands[0].Cards().size() << std::endl;
+        //   // std::cout << hands[1].Cards().size() << std::endl;
+        //   // std::cout << "total = 0 " << std::endl;
+        //   // assert(false);
+        //   total = 1;
+        // }
+        // // if (player_id == 0 && card_idx == 0) {
+        // //   std::cout << "total: " << total << std::endl;
+        // // }
+        // // normalize
+        // for (int i = 0; i < num_colors * num_ranks; ++i) {
+        //   int offset = base_offset + i;
+        //   new_v1_belief[offset] /= total;
+        // }
+        // // if (player_id == 0 && card_idx == 0) {
+        // //   for (int i = 0; i < num_colors * num_ranks; ++i) {
+        // //     int offset = base_offset + i;
+        // //     std::cout << new_v1_belief[offset] << ", ";
+        // //   }
+        // //   std::cout << std::endl;
+        // // }
+      }
+    }
+    // interpolate & normalize
+    for (int player_id = 0; player_id < num_players; ++player_id) {
+      int num_cards = hands[player_id].Cards().size();
+      for (int card_idx = 0; card_idx < num_cards; ++card_idx) {
+        float total = 0;
+        int base_offset = player_offset * player_id + card_idx * per_card_offset;
+        for (int i = 0; i < num_colors * num_ranks; ++i) {
+          int offset = i + base_offset;
+          v1_belief[offset] = (1 - weight) * v1_belief[offset] + weight * new_v1_belief[offset];
+          total += v1_belief[offset];
+        }
+        if (total <= 0) {
+          std::cout << "total = 0 " << std::endl;
+          assert(false);
+        }
+        for (int i = 0; i < num_colors * num_ranks; ++i) {
+          int offset = i + base_offset;
+          v1_belief[offset] /= total;
+        }
+      }
+    }
+  }
+
+  for (size_t i = 0; i < v1_belief.size(); ++i) {
+    (*encoding)[i + start_offset] = v1_belief[i];
+  }
+  return v1_belief.size();
+}
+
 }  // namespace
 
 int LastActionSectionLength(const HanabiGame& game) {
@@ -582,6 +721,66 @@ std::vector<float> CanonicalObservationEncoder::EncodeLastAction(
   return encoding;
 }
 
+std::vector<float> ExtractBelief(const std::vector<float>& encoding,
+                                 const HanabiGame& game) {
+  int bits_per_card = BitsPerCard(game);
+  int num_colors = game.NumColors();
+  int num_ranks = game.NumRanks();
+  int num_players = game.NumPlayers();
+  int hand_size = game.HandSize();
+  int encoding_sector_len = bits_per_card + num_colors + num_ranks;
+  assert(encoding_sector_len * hand_size * num_players == (int)encoding.size());
+
+  std::vector<float> belief(num_players * hand_size * bits_per_card);
+  for (int i = 0; i < num_players; ++i) {
+    for (int j = 0; j < hand_size; ++j) {
+      for (int k = 0; k < bits_per_card; ++k) {
+        int belief_offset = (i * hand_size + j) * bits_per_card + k;
+        int encoding_offset = (i * hand_size + j) * encoding_sector_len + k;
+        belief[belief_offset] = encoding[encoding_offset];
+      }
+    }
+  }
+  return belief;
+}
+
+std::vector<float> CanonicalObservationEncoder::EncodeV0Belief(
+    const HanabiObservation& obs) const {
+  std::vector<float> encoding(CardKnowledgeSectionLength(*parent_game_), 0);
+  int len = EncodeV0Belief_(*parent_game_, obs, 0, &encoding);
+  assert(len == (int)encoding.size());
+  auto belief = ExtractBelief(encoding, *parent_game_);
+  return belief;
+}
+
+std::vector<float> CanonicalObservationEncoder::EncodeV1Belief(
+    const HanabiObservation& obs) const {
+  std::vector<float> encoding(CardKnowledgeSectionLength(*parent_game_), 0);
+  int len = EncodeV1Belief_(*parent_game_, obs, 0, &encoding);
+  assert(len == (int)encoding.size());
+  auto belief = ExtractBelief(encoding, *parent_game_);
+  return belief;
+}
+
+std::vector<float> CanonicalObservationEncoder::EncodeHandMask(
+    const HanabiObservation& obs) const {
+  std::vector<float> encoding(CardKnowledgeSectionLength(*parent_game_), 0);
+  // const int len = EncodeCardKnowledge(game, obs, start_offset, encoding);
+  EncodeCardKnowledge(*parent_game_, obs, 0, &encoding);
+  auto hm = ExtractBelief(encoding, *parent_game_);
+  return hm;
+}
+
+std::vector<float> CanonicalObservationEncoder::EncodeCardCount(
+    const HanabiObservation& obs) const {
+  std::vector<float> encoding;
+  auto cc = ComputeCardCount(*parent_game_, obs);
+  for (size_t i = 0; i < cc.size(); ++i) {
+    encoding.push_back((float)cc[i]);
+  }
+  return encoding;
+}
+
 std::vector<float> CanonicalObservationEncoder::Encode(
     const HanabiObservation& obs,
     const std::vector<float>* eps,
@@ -602,7 +801,7 @@ std::vector<float> CanonicalObservationEncoder::Encode(
   offset += EncodeDiscards(*parent_game_, obs, offset, &encoding);
   offset += EncodeLastAction_(*parent_game_, obs, offset, &encoding);
   if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
-    offset += EncodeV0Belief(*parent_game_, obs, offset, &encoding);
+    offset += EncodeV1Belief_(*parent_game_, obs, offset, &encoding);
   }
 
   assert(offset == encoding.size());
