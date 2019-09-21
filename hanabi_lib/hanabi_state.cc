@@ -359,10 +359,18 @@ std::string HanabiState::ToString() const {
 }
 
 int HanabiState::Score() const {
-  if (LifeTokens() <= 0 && parent_game_->BombZero()) {
-    return 0;
+  int score = std::accumulate(fireworks_.begin(), fireworks_.end(), 0);
+  if (LifeTokens() <= 0) {
+    int bomb = parent_game_->Bomb();
+    if (bomb == 0) {
+      return 0;
+    } else if (bomb == -1) {
+      return std::max(0, score - 1);
+    } else if (bomb == 1) {
+      return score;
+    }
   }
-  return std::accumulate(fireworks_.begin(), fireworks_.end(), 0);
+  return score;
 }
 
 HanabiState::EndOfGameType HanabiState::EndOfGameStatus() const {

@@ -85,7 +85,7 @@ class HanabiGame {
   // Get the first player to act. Might be randomly generated at each call.
   int GetSampledStartPlayer() const;
 
-  bool BombZero() const { return bomb_zero_; }
+  int Bomb() const { return bomb_; }
 
   bool FeedEps() const { return feed_eps_; }
 
@@ -119,7 +119,7 @@ class HanabiGame {
   int seed_ = -1;
   bool random_start_player_ = false;
   AgentObservationType observation_type_ = kCardKnowledge;
-  bool bomb_zero_ = false;
+  int bomb_ = 0;
   bool feed_eps_ = false;
   mutable std::mt19937 rng_;
 };
