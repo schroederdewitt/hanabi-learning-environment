@@ -87,8 +87,6 @@ class HanabiGame {
 
   int Bomb() const { return bomb_; }
 
-  bool FeedEps() const { return feed_eps_; }
-
   std::mt19937* rng() const {
     return &rng_;
   }
@@ -120,7 +118,6 @@ class HanabiGame {
   bool random_start_player_ = false;
   AgentObservationType observation_type_ = kCardKnowledge;
   int bomb_ = 0;
-  bool feed_eps_ = false;
   mutable std::mt19937 rng_;
 };
 

@@ -46,7 +46,6 @@ HanabiGame::HanabiGame(
   observation_type_ = AgentObservationType(ParameterValue<int>(
       params_, "observation_type", AgentObservationType::kCardKnowledge));
   bomb_ = ParameterValue<int>(params_, "bomb", 0);
-  feed_eps_ = bool(ParameterValue<int>(params_, "feed_eps", 0));
 
   while (seed_ == -1) {
     seed_ = std::random_device()();
