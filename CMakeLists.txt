@@ -1,8 +1,8 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (hanabi_learning_environment)
 
-set(CMAKE_C_FLAGS "-O2 -std=c++11 -fPIC")
-set(CMAKE_CXX_FLAGS "-O2 -std=c++11 -Wall -Wextra -fPIC -Wno-sign-compare")
+set(CMAKE_C_FLAGS "-O3 -std=c++11 -fPIC")
+set(CMAKE_CXX_FLAGS "-O3 -std=c++11 -Wall -Wextra -fPIC -Wno-sign-compare")
 
 add_subdirectory (hanabi_lib)
 
