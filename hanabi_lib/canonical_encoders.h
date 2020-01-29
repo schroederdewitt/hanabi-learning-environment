@@ -33,16 +33,26 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       : parent_game_(parent_game) {}
 
   std::vector<int> Shape() const override;
-  std::vector<float> Encode(const HanabiObservation& obs,
-                            bool show_own_cards=false) const override;
 
-  std::vector<float> EncodeV0Belief(const HanabiObservation& obs, bool all_player) const;
-  std::vector<float> EncodeV1Belief(const HanabiObservation& obs, bool all_player) const;
-  std::vector<float> EncodeHandMask(const HanabiObservation& obs) const;
-  std::vector<float> EncodeCardCount(const HanabiObservation& obs) const;
+  std::vector<float> Encode(const HanabiObservation&) const override {
+    std::cerr << "Not Impled" << std::endl;
+    throw std::logic_error("Function not yet implemented"); //assert(false);
+    return std::vector<float>();
+    // return Encode(obs, false, false);
+  }
+
+  std::vector<float> Encode(const HanabiObservation& obs,
+                            bool show_own_cards,
+                            bool shuffle) const;
+
+  // std::vector<float> EncodeV0Belief(const HanabiObservation& obs, bool all_player) const;
+  // std::vector<float> EncodeV1Belief(const HanabiObservation& obs, bool all_player) const;
+  // std::vector<float> EncodeHandMask(const HanabiObservation& obs) const;
+  // std::vector<float> EncodeCardCount(const HanabiObservation& obs) const;
 
   std::vector<float> EncodeLastAction(const HanabiObservation& obs) const;
 
+  // for aux task
   std::vector<float> EncodeOwnHandTrinary(const HanabiObservation& obs) const;
   std::vector<float> EncodeOwnHand(const HanabiObservation& obs) const;
 
