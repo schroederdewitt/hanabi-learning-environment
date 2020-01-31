@@ -51,6 +51,11 @@ class HanabiMove {
   int8_t Color() const { return color_; }
   int8_t Rank() const { return rank_; }
 
+  void SetColor(int8_t color) {
+    // assert(color_ != -1 && color != -1);
+    color_ = color;
+  }
+
  private:
   Type move_type_ = kInvalid;
   int8_t card_index_ = -1;

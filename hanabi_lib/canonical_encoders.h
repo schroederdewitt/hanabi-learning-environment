@@ -43,18 +43,25 @@ class CanonicalObservationEncoder : public ObservationEncoder {
 
   std::vector<float> Encode(const HanabiObservation& obs,
                             bool show_own_cards,
-                            bool shuffle) const;
+                            const std::vector<int>& order,
+                            bool shuffle_color,
+                            const std::vector<int>& color_permute,
+                            const std::vector<int>& inv_color_permute) const;
 
   // std::vector<float> EncodeV0Belief(const HanabiObservation& obs, bool all_player) const;
   // std::vector<float> EncodeV1Belief(const HanabiObservation& obs, bool all_player) const;
   // std::vector<float> EncodeHandMask(const HanabiObservation& obs) const;
   // std::vector<float> EncodeCardCount(const HanabiObservation& obs) const;
 
-  std::vector<float> EncodeLastAction(const HanabiObservation& obs) const;
+  std::vector<float> EncodeLastAction(
+      const HanabiObservation& obs,
+      const std::vector<int>& order,
+      bool shuffle_color,
+      const std::vector<int>& color_permute) const;
 
-  // for aux task
-  std::vector<float> EncodeOwnHandTrinary(const HanabiObservation& obs) const;
-  std::vector<float> EncodeOwnHand(const HanabiObservation& obs) const;
+  // // for aux task
+  // std::vector<float> EncodeOwnHandTrinary(const HanabiObservation& obs) const;
+  // std::vector<float> EncodeOwnHand(const HanabiObservation& obs) const;
 
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;
