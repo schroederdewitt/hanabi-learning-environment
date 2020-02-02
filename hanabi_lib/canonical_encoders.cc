@@ -731,4 +731,43 @@ std::vector<float> CanonicalObservationEncoder::Encode(
   return encoding;
 }
 
+std::vector<float> CanonicalObservationEncoder::EncodeOwnHandTrinary(
+    const HanabiObservation& obs) const {
+  // int len = parent_game_->HandSize() * BitsPerCard(*parent_game_);
+  // hard code 5 cards, empty slot will be all zero
+  int len = 5 * 3;
+  std::vector<float> encoding(len, 0);
+  int bits_per_card = 3; // BitsPerCard(game);
+  int num_ranks = parent_game_->NumRanks();
+
+  int offset = 0;
+  const std::vector<HanabiHand>& hands = obs.Hands();
+  const int player = 0;
+  const std::vector<HanabiCard>& cards = hands[player].Cards();
+
+  const std::vector<int>& fireworks = obs.Fireworks();
+  for (const HanabiCard& card : cards) {
+    // Only a player's own cards can be invalid/unobserved.
+    // assert(card.IsValid());
+    assert(card.Color() < parent_game_->NumColors());
+    assert(card.Rank() < num_ranks);
+    assert(card.IsValid());
+    // std::cout << offset << CardIndex(card.Color(), card.Rank(), num_ranks) << std::endl;
+    // std::cout << card.Color() << ", " << card.Rank() << ", " << num_ranks << std::endl;
+    auto firework = fireworks[card.Color()];
+    if (card.Rank() == firework) {
+      encoding[offset] = 1;
+    } else if (card.Rank() < firework) {
+      encoding[offset + 1] = 1;
+    } else {
+      encoding[offset + 2] = 1;
+    }
+
+    offset += bits_per_card;
+  }
+
+  assert(offset <= len);
+  return encoding;
+}
+
 }  // namespace hanabi_learning_env

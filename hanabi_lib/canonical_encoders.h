@@ -59,8 +59,8 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       bool shuffle_color,
       const std::vector<int>& color_permute) const;
 
-  // // for aux task
-  // std::vector<float> EncodeOwnHandTrinary(const HanabiObservation& obs) const;
+  // for aux task
+  std::vector<float> EncodeOwnHandTrinary(const HanabiObservation& obs) const;
   // std::vector<float> EncodeOwnHand(const HanabiObservation& obs) const;
 
   ObservationEncoder::Type type() const override {
