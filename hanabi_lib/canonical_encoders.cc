@@ -700,7 +700,8 @@ std::vector<float> CanonicalObservationEncoder::Encode(
     const std::vector<int>& order,
     bool shuffle_color,
     const std::vector<int>& color_permute,
-    const std::vector<int>& inv_color_permute) const {
+    const std::vector<int>& inv_color_permute,
+    bool hide_action) const {
   // Make an empty bit string of the proper size.
   std::vector<float> encoding(FlatLength(Shape()), 0);
   // std::cout << "encoding shape: " << encoding.size() << std::endl;
@@ -720,8 +721,12 @@ std::vector<float> CanonicalObservationEncoder::Encode(
       *parent_game_, obs, offset, shuffle_color, inv_color_permute, &encoding);
   offset += EncodeDiscards(
       *parent_game_, obs, offset, shuffle_color, color_permute, &encoding);
-  offset += EncodeLastAction_(
-      *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding);
+  if (hide_action) {
+    offset += LastActionSectionLength(*parent_game_);
+  } else {
+    offset += EncodeLastAction_(
+        *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding);
+  }
   if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
     offset += EncodeV0Belief_(
         *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding, nullptr);

@@ -46,7 +46,8 @@ class CanonicalObservationEncoder : public ObservationEncoder {
                             const std::vector<int>& order,
                             bool shuffle_color,
                             const std::vector<int>& color_permute,
-                            const std::vector<int>& inv_color_permute) const;
+                            const std::vector<int>& inv_color_permute,
+                            bool hide_action) const;
 
   // std::vector<float> EncodeV0Belief(const HanabiObservation& obs, bool all_player) const;
   // std::vector<float> EncodeV1Belief(const HanabiObservation& obs, bool all_player) const;
