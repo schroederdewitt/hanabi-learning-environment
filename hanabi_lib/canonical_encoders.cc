@@ -89,11 +89,11 @@ int EncodeHands(const HanabiGame& game,
 
     // for (const HanabiCard& card : cards) {
     for (int i = 0; i < cards.size(); ++i) {
-      int card_idx = i;
+      int card_i = i;
       if (player != 0 && order.size() > 0) {
-        card_idx = order[i];
+        card_i = order[i];
       }
-      const auto& card = cards[card_idx];
+      const auto& card = cards[card_i];
       // Only a player's own cards can be invalid/unobserved.
       // assert(card.IsValid());
       assert(card.Color() < game.NumColors());
@@ -774,5 +774,74 @@ std::vector<float> CanonicalObservationEncoder::EncodeOwnHandTrinary(
   assert(offset <= len);
   return encoding;
 }
+
+std::vector<float> CanonicalObservationEncoder::EncodeOwnHand(
+    const HanabiObservation& obs,
+    bool shuffle_color,
+    const std::vector<int>& color_permute
+) const {
+  int bits_per_card =  BitsPerCard(*parent_game_);
+  int len = parent_game_->HandSize() * bits_per_card;
+  std::vector<float> encoding(len, 0);
+
+  const std::vector<HanabiCard>& cards = obs.Hands()[0].Cards();
+  const int num_ranks = parent_game_->NumRanks();
+
+  int offset = 0;
+  for (const HanabiCard& card : cards) {
+    // Only a player's own cards can be invalid/unobserved.
+    assert(card.IsValid());
+    int idx = CardIndex(card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
+    encoding[offset + idx] = 1;
+    offset += bits_per_card;
+  }
+
+  assert(offset == cards.size() * bits_per_card);
+  return encoding;
+}
+
+// std::vector<std::vector<int>> CanonicalObservationEncoder::ComputePrivateCardCount(
+//     const HanabiObservation& obs,
+//     bool shuffle_color,
+//     const std::vector<int>& color_permute) const {
+//   std::vector<int> card_count = ComputeCardCount(
+//       *parent_game_, obs, shuffle_color, color_permute);
+//   std::vector<std::vector<int>> priv_card_count;
+
+//   int num_players = parent_game_->NumPlayers();
+//   int num_ranks = parent_game_->NumRanks();
+//   const std::vector<HanabiHand>& hands = obs.Hands();
+//   assert(num_players == 2);
+
+//   {
+//     // our dear partner
+//     int partner = 1;
+//     const std::vector<HanabiCard>& cards = hands[partner].Cards();
+
+//     for (const HanabiCard& card : cards) {
+//       auto card_idx = CardIndex(
+//           card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
+//       assert(card_count[card_idx] >= 1);
+//       --card_count[card_idx];
+//     }
+//   }
+
+//   {
+//     int me = 0;
+//     const std::vector<HanabiCard>& cards = hands[me].Cards();
+//     // cc0
+//     priv_card_count.push_back(card_count);
+//     for (int i = 0; i < cards.size() - 1; ++i) {
+//       const auto& card = cards[i];
+//       auto card_idx = CardIndex(
+//           card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
+//       assert(card_count[card_idx] >= 1);
+//       --card_count[card_idx];
+//       priv_card_count.push_back(card_count);
+//     }
+//     assert(priv_card_count.size() == cards.size());
+//   }
+//   return priv_card_count;
+// }
 
 }  // namespace hanabi_learning_env

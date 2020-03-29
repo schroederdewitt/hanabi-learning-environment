@@ -62,7 +62,16 @@ class CanonicalObservationEncoder : public ObservationEncoder {
 
   // for aux task
   std::vector<float> EncodeOwnHandTrinary(const HanabiObservation& obs) const;
-  // std::vector<float> EncodeOwnHand(const HanabiObservation& obs) const;
+
+  std::vector<float> EncodeOwnHand(
+      const HanabiObservation& obs,
+      bool shuffle_color,
+      const std::vector<int>& color_permute) const;
+
+  // std::vector<std::vector<int>> ComputePrivateCardCount(
+  //   const HanabiObservation& obs,
+  //   bool shuffle_color,
+  //   const std::vector<int>& color_permute) const;
 
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;
