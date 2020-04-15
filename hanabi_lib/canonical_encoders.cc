@@ -800,6 +800,35 @@ std::vector<float> CanonicalObservationEncoder::EncodeOwnHand(
   return encoding;
 }
 
+std::vector<float> CanonicalObservationEncoder::EncodeAllHand(
+    const HanabiObservation& obs,
+    bool shuffle_color,
+    const std::vector<int>& color_permute
+) const {
+  int bits_per_card =  BitsPerCard(*parent_game_);
+  int len = obs.Hands().size() * parent_game_->HandSize() * bits_per_card;
+  std::vector<float> encoding(len, 0);
+
+  int offset = 0;
+  for (int player_idx = 0; player_idx < obs.Hands().size(); ++player_idx) {
+    const std::vector<HanabiCard>& cards = obs.Hands()[player_idx].Cards();
+    const int num_ranks = parent_game_->NumRanks();
+
+    for (const HanabiCard& card : cards) {
+      // Only a player's own cards can be invalid/unobserved.
+      assert(card.IsValid());
+      int idx = CardIndex(card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
+      encoding[offset + idx] = 1;
+      offset += bits_per_card;
+    }
+    offset += bits_per_card * (parent_game_->HandSize() - cards.size());
+  }
+
+  // std::cout << "offset: " << offset << ", len: " << len << std::endl;
+  assert(offset == len);
+  return encoding;
+}
+
 // std::vector<std::vector<int>> CanonicalObservationEncoder::ComputePrivateCardCount(
 //     const HanabiObservation& obs,
 //     bool shuffle_color,

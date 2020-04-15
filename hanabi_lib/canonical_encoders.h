@@ -68,6 +68,11 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       bool shuffle_color,
       const std::vector<int>& color_permute) const;
 
+  std::vector<float> EncodeAllHand(
+      const HanabiObservation& obs,
+      bool shuffle_color,
+      const std::vector<int>& color_permute) const;
+
   // std::vector<std::vector<int>> ComputePrivateCardCount(
   //   const HanabiObservation& obs,
   //   bool shuffle_color,
