@@ -15,6 +15,7 @@
 #ifndef __HANABI_HAND_H__
 #define __HANABI_HAND_H__
 
+#include <cassert>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -84,6 +85,10 @@ class HanabiHand {
     void ApplyIsNotRankHint(int rank) { rank_.ApplyIsNotValueHint(rank); }
     std::string ToString() const;
 
+    bool IsCardPlausible(int color, int rank) const {
+      return color_.IsPlausible(color) && rank_.IsPlausible(rank);
+    }
+
    private:
     ValueKnowledge color_;
     ValueKnowledge rank_;
@@ -101,6 +106,27 @@ class HanabiHand {
   const std::vector<CardKnowledge>& Knowledge() const {
     return card_knowledge_;
   }
+
+  bool CanSetCards(const std::vector<HanabiCard>& cards) const {
+    if (cards_.size() != cards.size()) {
+      return false;
+    }
+
+    for (size_t i = 0; i < cards.size(); ++i) {
+      const auto& card = cards[i];
+      const auto& knowledge = card_knowledge_[i];
+      if (!knowledge.IsCardPlausible(card.Color(), card.Rank())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void SetCards(const std::vector<HanabiCard>& cards) {
+    assert(CanSetCards(cards));
+    cards_ = cards;
+  }
+
   void AddCard(HanabiCard card, const CardKnowledge& initial_knowledge);
   // Remove card_index card from hand. Put in discard_pile if not nullptr
   // (pushes the card to the back of the discard_pile vector).

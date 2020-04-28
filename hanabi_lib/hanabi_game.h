@@ -87,6 +87,10 @@ class HanabiGame {
 
   int Bomb() const { return bomb_; }
 
+  void SetSeed(int seed) const {
+    rng_.seed(seed);
+  }
+
   std::mt19937* rng() const {
     return &rng_;
   }
