@@ -32,9 +32,9 @@ class ObservationEncoder {
   // Returns the shape (dimension sizes of the tensor).
   virtual std::vector<int> Shape() const = 0;
 
-  // All of the canonical observation encodings are vectors of bits. We can
-  // change this if we want something more general (e.g. floats or doubles).
-  virtual std::vector<float> Encode(const HanabiObservation& obs) const = 0;
+  // // All of the canonical observation encodings are vectors of bits. We can
+  // // change this if we want something more general (e.g. floats or doubles).
+  // virtual std::vector<float> Encode(const HanabiObservation& obs) const = 0;
 
   // Return the type of this encoder.
   virtual Type type() const = 0;

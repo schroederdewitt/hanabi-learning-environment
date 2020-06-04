@@ -842,20 +842,21 @@ char* EncodeObservation(pyhanabi_observation_encoder_t* encoder,
   REQUIRE(encoder->encoder != nullptr);
   REQUIRE(observation != nullptr);
   REQUIRE(observation->observation != nullptr);
-  auto obs_enc = reinterpret_cast<hanabi_learning_env::ObservationEncoder*>(
-      encoder->encoder);
-  auto obs = reinterpret_cast<hanabi_learning_env::HanabiObservation*>(
-      observation->observation);
-  // TODO: this is changed to float, making str repr not accurate
-  std::vector<float> encoding = obs_enc->Encode(*obs);
-  std::string obs_str = "";
-  for (int i = 0; i < encoding.size(); i++) {
-    obs_str += (encoding[i] ? "1" : "0");
-    if (i != encoding.size() - 1) {
-      obs_str += ",";
-    }
-  }
-  return strdup(obs_str.c_str());
+  return nullptr;
+  // auto obs_enc = reinterpret_cast<hanabi_learning_env::ObservationEncoder*>(
+  //     encoder->encoder);
+  // auto obs = reinterpret_cast<hanabi_learning_env::HanabiObservation*>(
+  //     observation->observation);
+  // // TODO: this is changed to float, making str repr not accurate
+  // std::vector<float> encoding = obs_enc->Encode(*obs);
+  // std::string obs_str = "";
+  // for (int i = 0; i < encoding.size(); i++) {
+  //   obs_str += (encoding[i] ? "1" : "0");
+  //   if (i != encoding.size() - 1) {
+  //     obs_str += ",";
+  //   }
+  // }
+  // return strdup(obs_str.c_str());
 }
 
 } /* extern "C" */

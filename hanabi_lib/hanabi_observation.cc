@@ -94,6 +94,44 @@ HanabiObservation::HanabiObservation(const HanabiState& state,
   }
 }
 
+HanabiObservation::HanabiObservation(
+    int cur_player,
+    int observing_player,
+    // hands[observing_player] is for the observing player
+    const std::vector<HanabiHand>& hands,
+    const std::vector<HanabiCard>& discard_pile,
+    const std::vector<int>& fireworks,
+    // number of remaining cards
+    int deck_size,
+    int information_tokens,
+    int life_tokens,
+    const std::vector<HanabiMove>& legal_moves,
+    const HanabiGame* parent_game)
+    : cur_player_offset_(PlayerToOffset(cur_player, observing_player, parent_game->NumPlayers())),
+      observing_player_(observing_player),
+      discard_pile_(discard_pile),
+      fireworks_(fireworks),
+      deck_size_(deck_size),
+      information_tokens_(information_tokens),
+      life_tokens_(life_tokens),
+      legal_moves_(legal_moves),
+      parent_game_(parent_game) {
+  // TODO: setup hands
+  REQUIRE(observing_player >= 0 && observing_player < parent_game_->NumPlayers());
+  hands_.reserve(hands.size());
+  const bool hide_knowledge = parent_game_->ObservationType() == HanabiGame::kMinimal;
+  auto show_cards = false;
+  assert(!hide_knowledge && !show_cards);
+  hands_.push_back(HanabiHand(hands[observing_player], !show_cards, hide_knowledge));
+
+  const int num_players = parent_game_->NumPlayers();
+  for (int offset = 1; offset < num_players; ++offset) {
+    auto player_idx = (observing_player + offset) % num_players;
+    auto hand = HanabiHand(hands[player_idx], false, hide_knowledge);
+    hands_.push_back(std::move(hand));
+  }
+}
+
 std::string HanabiObservation::ToString() const {
   std::string result;
   result += "Life tokens: " + std::to_string(LifeTokens()) + "\n";

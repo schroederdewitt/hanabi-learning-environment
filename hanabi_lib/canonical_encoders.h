@@ -34,12 +34,13 @@ class CanonicalObservationEncoder : public ObservationEncoder {
 
   std::vector<int> Shape() const override;
 
-  std::vector<float> Encode(const HanabiObservation&) const override {
-    std::cerr << "Not Impled" << std::endl;
-    throw std::logic_error("Function not yet implemented"); //assert(false);
-    return std::vector<float>();
-    // return Encode(obs, false, false);
-  }
+  // std::vector<float> Encode(const HanabiObservation&) const override {
+  //   // std::cerr << "Not Impled" << std::endl;
+  //   // throw std::logic_error("Function not yet implemented"); //assert(false);
+  //   // return std::vector<float>();
+  //   // // return Encode(obs, false, false);
+  //   return Encode(obs, false, {}, false, {}, {}, false);
+  // }
 
   std::vector<float> Encode(const HanabiObservation& obs,
                             bool show_own_cards,

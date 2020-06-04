@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 #include "util.h"
 
@@ -28,6 +29,9 @@ HanabiHand::ValueKnowledge::ValueKnowledge(int value_range)
 
 void HanabiHand::ValueKnowledge::ApplyIsValueHint(int value) {
   assert(value >= 0 && value < value_plausible_.size());
+  if (!(value_ < 0 || value_ == value)) {
+    std::cout << "value_: " << value_ << ", hint: " << value << std::endl;
+  }
   assert(value_ < 0 || value_ == value);
   assert(value_plausible_[value] == true);
   value_ = value;
@@ -79,7 +83,7 @@ HanabiHand::HanabiHand(const HanabiHand& hand, bool hide_cards,
 
 void HanabiHand::AddCard(HanabiCard card,
                          const CardKnowledge& initial_knowledge) {
-  REQUIRE(card.IsValid());
+  // REQUIRE(card.IsValid());
   cards_.push_back(card);
   card_knowledge_.push_back(initial_knowledge);
 }

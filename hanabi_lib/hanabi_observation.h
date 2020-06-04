@@ -32,6 +32,21 @@ class HanabiObservation {
  public:
   HanabiObservation(const HanabiState& state, int observing_player, bool show_cards=false);
 
+  // for creation with detailed game configuration
+  HanabiObservation(
+      int cur_player,
+      int observing_player,
+      // hands[observing_player] is for the observing player
+      const std::vector<HanabiHand>& hands,
+      const std::vector<HanabiCard>& discard_pile,
+      const std::vector<int>& fireworks,
+      // number of remaining cards
+      int deck_size,
+      int information_tokens,
+      int life_tokens,
+      const std::vector<HanabiMove>& legal_moves,
+      const HanabiGame* parent_game);
+
   std::string ToString() const;
 
   // offset of current player from observing player.

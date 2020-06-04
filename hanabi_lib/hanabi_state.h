@@ -172,14 +172,14 @@ class HanabiState {
   //   return deck_.DeckHistory(parent_game_->rng());
   // }
 
-  void SetCardsForPlayer(int player, const std::vector<HanabiCard>& cards) {
-    auto& hand = hands_[player];
-    std::cout << "before: hand: " << hand.ToString() << std::endl;
+  // void SetCardsForPlayer(int player, const std::vector<HanabiCard>& cards) {
+  //   auto& hand = hands_[player];
+  //   std::cout << "before: hand: " << hand.ToString() << std::endl;
 
-    deck_.AddCards(hand.Cards(), *parent_game_);
-    hand.SetCards(cards);
-    deck_.RemoveCards(hand.Cards());
-  }
+  //   deck_.AddCards(hand.Cards(), *parent_game_);
+  //   hand.SetCards(cards);
+  //   deck_.RemoveCards(hand.Cards());
+  // }
 
   void SetGame(const HanabiGame* game) {
     parent_game_ = game;
