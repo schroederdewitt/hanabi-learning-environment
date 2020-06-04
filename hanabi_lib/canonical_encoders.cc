@@ -58,7 +58,7 @@ int CardIndex(int color,
 }
 
 int HandsSectionLength(const HanabiGame& game) {
-  return (game.NumPlayers() - 1) * game.HandSize() * BitsPerCard(game) +
+  return game.NumPlayers() * game.HandSize() * BitsPerCard(game) +
          game.NumPlayers();
 }
 
@@ -83,7 +83,7 @@ int EncodeHands(const HanabiGame& game,
   int offset = start_offset;
   const std::vector<HanabiHand>& hands = obs.Hands();
   assert(hands.size() == num_players);
-  for (int player = 1; player < num_players; ++player) {
+  for (int player = 0; player < num_players; ++player) {
     const std::vector<HanabiCard>& cards = hands[player].Cards();
     int num_cards = 0;
 
@@ -98,24 +98,24 @@ int EncodeHands(const HanabiGame& game,
       // assert(card.IsValid());
       assert(card.Color() < game.NumColors());
       assert(card.Rank() < num_ranks);
-      // if (player == 0) {
-      //   if (show_own_cards) {
-      //     assert(card.IsValid());
-      //     // std::cout << offset << CardIndex(card.Color(), card.Rank(), num_ranks) << std::endl;
-      //     // std::cout << card.Color() << ", " << card.Rank() << ", " << num_ranks << std::endl;
-      //     auto card_idx = CardIndex(
-      //         card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
-      //     (*encoding).at(offset + card_idx) = 1;
-      //   } else {
-      //     assert(!card.IsValid());
-      //     // (*encoding).at(offset + CardIndex(card.Color(), card.Rank(), num_ranks)) = 0;
-      //   }
-      // } else {
+      if (player == 0) {
+        if (show_own_cards) {
+          assert(card.IsValid());
+          // std::cout << offset << CardIndex(card.Color(), card.Rank(), num_ranks) << std::endl;
+          // std::cout << card.Color() << ", " << card.Rank() << ", " << num_ranks << std::endl;
+          auto card_idx = CardIndex(
+              card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
+          (*encoding).at(offset + card_idx) = 1;
+        } else {
+          assert(!card.IsValid());
+          // (*encoding).at(offset + CardIndex(card.Color(), card.Rank(), num_ranks)) = 0;
+        }
+      } else {
         assert(card.IsValid());
         auto card_idx = CardIndex(
             card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
         (*encoding).at(offset + card_idx) = 1;
-      // }
+      }
 
       ++num_cards;
       offset += bits_per_card;
