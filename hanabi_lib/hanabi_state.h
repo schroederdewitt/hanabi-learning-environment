@@ -80,27 +80,27 @@ class HanabiState {
       return true;
     }
 
-    // // NOTE: deck history may no longer be legal given we can clone
-    // // and reset deck, thus this function is disabled for now
-    // std::vector<std::string> DeckHistory(std::mt19937* rng) {
-    //   // std::cout << "before dealing all: " << deck_history_.size() << std::endl;
-    //   // deal all cards to finish a deck
-    //   while (!Empty()) {
-    //     DealCard(rng);
-    //   }
-    //   // std::cout << "after dealing all: " << deck_history_.size() << std::endl;
-    //   const char colornames[] = "roygb";
-    //   std::vector<std::string> deck;
-    //   for (auto i : deck_history_) {
-    //     char color = colornames[IndexToColor(i)];
-    //     int value = IndexToRank(i) + 1;
-    //     std::stringstream ss;
-    //     ss << value << color;
-    //     deck.push_back(ss.str());
-    //   }
+    // NOTE: deck history may no longer be legal given we can clone
+    // and reset deck, thus this function is disabled for now
+    std::vector<std::string> DeckHistory(std::mt19937* rng) {
+      // std::cout << "before dealing all: " << deck_history_.size() << std::endl;
+      // deal all cards to finish a deck
+      while (!Empty()) {
+        DealCard(rng);
+      }
+      // std::cout << "after dealing all: " << deck_history_.size() << std::endl;
+      const char colornames[] = "abcde";
+      std::vector<std::string> deck;
+      for (auto i : deck_history_) {
+        char color = colornames[IndexToColor(i)];
+        int value = IndexToRank(i) + 1;
+        std::stringstream ss;
+        ss << value << color;
+        deck.push_back(ss.str());
+      }
 
-    //   return deck;
-    // }
+      return deck;
+    }
 
    private:
     int CardToIndex(int color, int rank) const {
@@ -115,7 +115,7 @@ class HanabiState {
     std::vector<int> card_count_;
     int total_count_ = -1;  // Total number of cards available to be dealt out.
     int num_ranks_ = -1;    // From game.NumRanks(), used to map card to index.
-    // std::vector<int> deck_history_;
+    std::vector<int> deck_history_;
   };
 
   enum EndOfGameType {
@@ -168,9 +168,9 @@ class HanabiState {
     return move_history_;
   }
 
-  // std::vector<std::string> DeckHistory() {
-  //   return deck_.DeckHistory(parent_game_->rng());
-  // }
+  std::vector<std::string> DeckHistory() {
+    return deck_.DeckHistory(parent_game_->rng());
+  }
 
   // void SetCardsForPlayer(int player, const std::vector<HanabiCard>& cards) {
   //   auto& hand = hands_[player];
