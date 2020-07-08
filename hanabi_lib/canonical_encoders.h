@@ -29,8 +29,8 @@ namespace hanabi_learning_env {
 // This is the canonical observation encoding.
 class CanonicalObservationEncoder : public ObservationEncoder {
  public:
-  explicit CanonicalObservationEncoder(const HanabiGame* parent_game)
-      : parent_game_(parent_game) {}
+  explicit CanonicalObservationEncoder(const HanabiGame* parent_game, bool using_joint_obs)
+      : parent_game_(parent_game), using_joint_obs_(using_joint_obs) {}
 
   std::vector<int> Shape() const override;
 
@@ -74,6 +74,14 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       bool shuffle_color,
       const std::vector<int>& color_permute) const;
 
+  std::vector<float> EncodeJointFivePlayers(const HanabiObservation& obs,
+                                            bool show_own_cards,
+                                            const std::vector<int>& order,
+                                            bool shuffle_color,
+                                            const std::vector<int>& color_permute,
+                                            const std::vector<int>& inv_color_permute,
+                                            bool hide_action) const;
+
   // std::vector<std::vector<int>> ComputePrivateCardCount(
   //   const HanabiObservation& obs,
   //   bool shuffle_color,
@@ -85,6 +93,7 @@ class CanonicalObservationEncoder : public ObservationEncoder {
 
  private:
   const HanabiGame* parent_game_ = nullptr;
+  const bool using_joint_obs_;
 };
 
 int LastActionSectionLength(const HanabiGame& game);

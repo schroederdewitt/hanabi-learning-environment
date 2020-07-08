@@ -95,7 +95,7 @@ PYBIND11_MODULE(py_hanabi_lib, m) {
       ;
 
   py::class_<CanonicalObservationEncoder>(m, "ObservationEncoder")
-      .def(py::init<const HanabiGame*>())
+      .def(py::init<const HanabiGame*, bool>())
       .def("shape", &CanonicalObservationEncoder::Shape)
       .def("encode", &CanonicalObservationEncoder::Encode)
       ;

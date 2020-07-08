@@ -58,7 +58,7 @@ GameResult SimulateGame(const hanabi_learning_env::HanabiGame& game,
     }
 
     auto obs = hanabi_learning_env::HanabiObservation(state, state.CurPlayer());
-    hanabi_learning_env::CanonicalObservationEncoder encoder(&game);
+    hanabi_learning_env::CanonicalObservationEncoder encoder(&game, false);
     // std::vector<int> vecObs = encoder.Encode(obs);
     // std::cout << ">>>vec size: " << vecObs.size() << std::endl;
 
