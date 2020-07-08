@@ -96,7 +96,7 @@ class CanonicalObservationEncoder : public ObservationEncoder {
   const bool using_joint_obs_;
 };
 
-int LastActionSectionLength(const HanabiGame& game);
+int LastActionSectionLength(const HanabiGame& game, bool use_max_hand_size = false);
 
 }  // namespace hanabi_learning_env
 
