@@ -316,16 +316,16 @@ int EncodeLastAction_(const HanabiGame& game,
                       bool shuffle_color,
                       const std::vector<int>& color_permute,
                       std::vector<float>* encoding,
-                      bool use_max_hand_size = false) {
+                      bool using_joint_obs = false) {
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
-  int num_players = game.NumPlayers();
-  int hand_size = use_max_hand_size ? 5 : game.HandSize();
+  int num_players = using_joint_obs ? 5 : game.NumPlayers();
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
 
   int offset = start_offset;
   const HanabiHistoryItem* last_move = GetLastNonDealMove(obs.LastMoves());
   if (last_move == nullptr) {
-    offset += LastActionSectionLength(game, use_max_hand_size);
+    offset += LastActionSectionLength(game, using_joint_obs);
   } else {
     HanabiMove::Type last_move_type = last_move->move.MoveType();
 
@@ -358,7 +358,7 @@ int EncodeLastAction_(const HanabiGame& game,
     if (last_move_type == HanabiMove::Type::kRevealColor ||
         last_move_type == HanabiMove::Type::kRevealRank) {
       int8_t observer_relative_target =
-          (last_move->player + last_move->move.TargetOffset()) % num_players;
+          (last_move->player + last_move->move.TargetOffset()) % game.NumPlayers();
       (*encoding)[offset + observer_relative_target] = 1;
     }
     offset += num_players;
@@ -654,11 +654,13 @@ int EncodeV0Belief_(const HanabiGame& game,
 
 }  // namespace
 
-int LastActionSectionLength(const HanabiGame& game, bool use_max_hand_size) {
-  int hand_size_ = use_max_hand_size ? 5 : game.HandSize();
-  return game.NumPlayers() +  // player id
+int LastActionSectionLength(const HanabiGame& game,
+                            bool using_joint_obs) {
+  int hand_size_ = using_joint_obs ? 5 : game.HandSize();
+  int num_players = using_joint_obs ? 5 : game.NumPlayers();
+  return num_players +        // player id
          4 +                  // move types (play, dis, rev col, rev rank)
-         game.NumPlayers() +  // target player id (if hint action)
+         num_players +        // target player id (if hint action)
          game.NumColors() +   // color (if hint action)
          game.NumRanks() +    // rank (if hint action)
          hand_size_ +         // outcome (if hint action)
@@ -683,7 +685,7 @@ std::vector<float> CanonicalObservationEncoder::EncodeLastAction(
     const std::vector<int>& order,
     bool shuffle_color,
     const std::vector<int>& color_permute) const {
-  std::vector<float> encoding(LastActionSectionLength(*parent_game_, false), 0);
+  std::vector<float> encoding(LastActionSectionLength(*parent_game_), 0);
   int offset = 0;
   offset += EncodeLastAction_(
       *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding);
@@ -756,7 +758,7 @@ std::vector<float> CanonicalObservationEncoder::Encode(
   offset += EncodeDiscards(
       *parent_game_, obs, offset, shuffle_color, color_permute, &encoding);
   if (hide_action) {
-    offset += LastActionSectionLength(*parent_game_, false);
+    offset += LastActionSectionLength(*parent_game_);
   } else {
     offset += EncodeLastAction_(
         *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding);
@@ -893,7 +895,7 @@ std::vector<float> CanonicalObservationEncoder::EncodeJointFivePlayers(
   if (hide_action) {
     offset += LastActionSectionLength(*parent_game_, true);
   } else {
-    assert(false);    // Need to double check that this is correct (probably is, but just in case)
+    assert(false);    // Need to double check that this is correct, not being used right now
     offset += EncodeLastAction_(
         *parent_game_, obs, offset, order, shuffle_color,
         color_permute, &encoding, true);
