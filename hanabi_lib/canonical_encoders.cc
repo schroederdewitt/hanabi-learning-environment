@@ -150,7 +150,7 @@ int EncodeHands(const HanabiGame& game,
     offset += num_players;
   }
 
-  assert(offset - start_offset == HandsSectionLength(game, use_max_hand_size));
+  assert(offset - start_offset == HandsSectionLength(game, use_max_num_players, use_max_hand_size));
   return offset - start_offset;
 }
 
@@ -441,9 +441,16 @@ int EncodeLastAction_(const HanabiGame& game,
   return offset - start_offset;
 }
 
-int CardKnowledgeSectionLength(const HanabiGame& game, bool use_max_hand_size) {
-  int hand_size = use_max_hand_size ? 5 : game.HandSize();
+int CardKnowledgeSectionLength(const HanabiGame& game, bool using_joint_obs) {
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
   return game.NumPlayers() * hand_size *
+         (BitsPerCard(game) + game.NumColors() + game.NumRanks());
+}
+
+int V0BeliefSectionLength(const HanabiGame& game, bool using_joint_obs) {
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
+  int num_players = using_joint_obs ? 5 : game.NumPlayers();
+  return num_players * hand_size *
          (BitsPerCard(game) + game.NumColors() + game.NumRanks());
 }
 
@@ -475,12 +482,12 @@ int EncodeCardKnowledge(const HanabiGame& game,
                         bool shuffle_color,
                         const std::vector<int>& color_permute,
                         std::vector<float>* encoding,
-                        bool use_max_hand_size = false) {
+                        bool using_joint_obs = false) {
   int bits_per_card = BitsPerCard(game);
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
   int num_players = game.NumPlayers();
-  int hand_size = use_max_hand_size ? 5 : game.HandSize();
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
 
   int offset = start_offset;
   const std::vector<HanabiHand>& hands = obs.Hands();
@@ -536,7 +543,7 @@ int EncodeCardKnowledge(const HanabiGame& game,
     }
   }
 
-  assert(offset - start_offset == CardKnowledgeSectionLength(game, use_max_hand_size));
+  assert(offset - start_offset == CardKnowledgeSectionLength(game, using_joint_obs));
   return offset - start_offset;
 }
 
@@ -599,12 +606,12 @@ int EncodeV0Belief_(const HanabiGame& game,
                     const std::vector<int>& color_permute,
                     std::vector<float>* encoding,
                     std::vector<int>* ret_card_count,
-                    bool use_max_hand_size = false) {
+                    bool using_joint_obs = false) {
   // int bits_per_card = BitsPerCard(game);
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
   int num_players = game.NumPlayers();
-  int hand_size = use_max_hand_size ? 5 : game.HandSize();
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
 
   std::vector<int> card_count = ComputeCardCount(game, obs, shuffle_color, color_permute);
   if (ret_card_count != nullptr) {
@@ -613,7 +620,7 @@ int EncodeV0Belief_(const HanabiGame& game,
 
   // card knowledge
   const int len = EncodeCardKnowledge(
-      game, obs, start_offset, order, shuffle_color, color_permute, encoding, use_max_hand_size);
+      game, obs, start_offset, order, shuffle_color, color_permute, encoding, using_joint_obs);
   const int player_offset = len / num_players;
   const int per_card_offset = len / hand_size / num_players;
   assert(per_card_offset == num_colors * num_ranks + num_colors + num_ranks);
@@ -649,7 +656,14 @@ int EncodeV0Belief_(const HanabiGame& game,
       }
     }
   }
-  return len;
+
+  int extra_padding = 0;
+  if (using_joint_obs) {
+    extra_padding = (5 - num_players) * hand_size * (BitsPerCard(game) + num_colors + num_ranks);
+  }
+
+  assert(len + extra_padding == V0BeliefSectionLength(game, using_joint_obs));
+  return len + extra_padding;
 }
 
 }  // namespace
@@ -676,7 +690,7 @@ std::vector<int> CanonicalObservationEncoder::Shape() const {
           LastActionSectionLength(*parent_game_, using_joint_obs_) +
           (parent_game_->ObservationType() == HanabiGame::kMinimal
                ? 0
-               : CardKnowledgeSectionLength(*parent_game_, using_joint_obs_));
+               : V0BeliefSectionLength(*parent_game_, using_joint_obs_));
   return {l};
 }
 
