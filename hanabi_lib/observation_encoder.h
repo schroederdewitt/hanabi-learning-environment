@@ -26,7 +26,7 @@ namespace hanabi_learning_env {
 
 class ObservationEncoder {
  public:
-  enum Type { kCanonical = 0, kCanonicalJoint = 1};
+  enum Type { kCanonical = 0};
   virtual ~ObservationEncoder() = default;
 
   // Returns the shape (dimension sizes of the tensor).

@@ -803,11 +803,7 @@ void NewObservationEncoder(pyhanabi_observation_encoder_t* encoder,
   switch (otype) {
     case hanabi_learning_env::ObservationEncoder::Type::kCanonical:
       encoder->encoder = static_cast<hanabi_learning_env::ObservationEncoder*>(
-          new hanabi_learning_env::CanonicalObservationEncoder(hanabi_game, false));
-      break;
-    case hanabi_learning_env::ObservationEncoder::Type::kCanonicalJoint:
-      encoder->encoder = static_cast<hanabi_learning_env::ObservationEncoder*>(
-          new hanabi_learning_env::CanonicalObservationEncoder(hanabi_game, true));
+          new hanabi_learning_env::CanonicalObservationEncoder(hanabi_game));
       break;
     default:
       std::cerr << "Encoder type not recognized." << std::endl;

@@ -29,10 +29,12 @@ namespace hanabi_learning_env {
 // This is the canonical observation encoding.
 class CanonicalObservationEncoder : public ObservationEncoder {
  public:
-  explicit CanonicalObservationEncoder(const HanabiGame* parent_game, bool using_joint_obs)
-      : parent_game_(parent_game), using_joint_obs_(using_joint_obs) {}
+  explicit CanonicalObservationEncoder(const HanabiGame* parent_game)
+      : parent_game_(parent_game) {}
 
   std::vector<int> Shape() const override;
+
+  std::vector<int> ShapeJointObs() const;
 
   // std::vector<float> Encode(const HanabiObservation&) const override {
   //   // std::cerr << "Not Impled" << std::endl;
@@ -93,7 +95,6 @@ class CanonicalObservationEncoder : public ObservationEncoder {
 
  private:
   const HanabiGame* parent_game_ = nullptr;
-  const bool using_joint_obs_;
 };
 
 int LastActionSectionLength(const HanabiGame& game,
