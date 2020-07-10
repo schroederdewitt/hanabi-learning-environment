@@ -46,6 +46,7 @@ HanabiGame::HanabiGame(
   observation_type_ = AgentObservationType(ParameterValue<int>(
       params_, "observation_type", AgentObservationType::kCardKnowledge));
   bomb_ = ParameterValue<int>(params_, "bomb", 0);
+  using_joint_obs_for_any_num_players_ = ParameterValue<bool>(params_, "using_joint_obs", false);
 
   while (seed_ == -1) {
     seed_ = std::random_device()();
@@ -69,13 +70,16 @@ HanabiGame::HanabiGame(
 }
 
 int HanabiGame::MaxMoves() const {
+  if (using_joint_obs_for_any_num_players_) {
+    return MaxMovesAnyNumPlayers();
+  }
   return MaxDiscardMoves() + MaxPlayMoves() + MaxRevealColorMoves() +
          MaxRevealRankMoves();
 }
 
-int HanabiGame::MaxMovesAnyConfig() const {
-  return MaxDiscardMovesAnyConfig() + MaxPlayMovesAnyConfig() + MaxRevealColorMovesAnyConfig() +
-         MaxRevealRankMovesAnyConfig();
+int HanabiGame::MaxMovesAnyNumPlayers() const {
+  return MaxDiscardMovesAnyNumPlayers() + MaxPlayMovesAnyNumPlayers() +
+         MaxRevealColorMovesAnyNumPlayers() + MaxRevealRankMovesAnyNumPlayers();
 }
 
 int HanabiGame::GetMoveUid(HanabiMove move) const {
