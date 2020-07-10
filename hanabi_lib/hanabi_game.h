@@ -43,6 +43,9 @@ class HanabiGame {
 
   // Number of different player moves.
   int MaxMoves() const;
+
+  int MaxMovesAnyConfig() const;
+
   // Get a HanabiMove by unique id.
   HanabiMove GetMove(int uid) const { return moves_[uid]; }
   // Get unique id for a move. Returns -1 for invalid move.
@@ -101,6 +104,10 @@ class HanabiGame {
   int MaxPlayMoves() const { return hand_size_; }
   int MaxRevealColorMoves() const { return (num_players_ - 1) * num_colors_; }
   int MaxRevealRankMoves() const { return (num_players_ - 1) * num_ranks_; }
+  int MaxDiscardMovesAnyConfig() const { return 5; }
+  int MaxPlayMovesAnyConfig() const { return 5; }
+  int MaxRevealColorMovesAnyConfig() const { return 4 * num_colors_; }
+  int MaxRevealRankMovesAnyConfig() const { return 4 * num_ranks_; }
 
   int HandSizeFromRules() const;
   HanabiMove ConstructMove(int uid) const;

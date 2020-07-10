@@ -73,6 +73,11 @@ int HanabiGame::MaxMoves() const {
          MaxRevealRankMoves();
 }
 
+int HanabiGame::MaxMovesAnyConfig() const {
+  return MaxDiscardMovesAnyConfig() + MaxPlayMovesAnyConfig() + MaxRevealColorMovesAnyConfig() +
+         MaxRevealRankMovesAnyConfig();
+}
+
 int HanabiGame::GetMoveUid(HanabiMove move) const {
   return GetMoveUid(move.MoveType(), move.CardIndex(), move.TargetOffset(),
                     move.Color(), move.Rank());
