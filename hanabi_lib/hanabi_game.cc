@@ -168,7 +168,7 @@ int HanabiGame::HandSizeFromRules() const {
 // 2h, 2h+(p-1)c-1: color hint
 // 2h+(p-1)c, 2h+(p-1)c+(p-1)r-1: rank hint
 HanabiMove HanabiGame::ConstructMove(int uid) const {
-  int max_moves = using_joint_obs_for_any_num_players_ ? MaxMovesAnyNumPlayers : MaxMoves();
+  int max_moves = using_joint_obs_for_any_num_players_ ? MaxMovesAnyNumPlayers() : MaxMoves();
   int max_discard_moves = using_joint_obs_for_any_num_players_ ?
     MaxDiscardMovesAnyNumPlayers() : MaxDiscardMoves();
   int max_play_moves = using_joint_obs_for_any_num_players_ ?
@@ -176,26 +176,26 @@ HanabiMove HanabiGame::ConstructMove(int uid) const {
   int max_reveal_color_moves = using_joint_obs_for_any_num_players_ ?
     MaxRevealColorMovesAnyNumPlayers() : MaxRevealColorMoves();
 
-  if (uid < 0 || uid >= max_moves()) {
+  if (uid < 0 || uid >= max_moves) {
     return HanabiMove(HanabiMove::kInvalid, /*card_index=*/-1,
                       /*target_offset=*/-1, /*color=*/-1, /*rank=*/-1);
   }
-  if (uid < max_discard_moves()) {
+  if (uid < max_discard_moves) {
     return HanabiMove(HanabiMove::kDiscard, /*card_index=*/uid,
                       /*target_offset=*/-1, /*color=*/-1, /*rank=*/-1);
   }
-  uid -= max_discard_moves();
-  if (uid < max_play_moves()) {
+  uid -= max_discard_moves;
+  if (uid < max_play_moves) {
     return HanabiMove(HanabiMove::kPlay, /*card_index=*/uid,
                       /*target_offset=*/-1, /*color=*/-1, /*rank=*/-1);
   }
-  uid -= max_play_moves();
+  uid -= max_play_moves;
   if (uid < MaxRevealColorMoves()) {
     return HanabiMove(HanabiMove::kRevealColor, /*card_index=*/-1,
                       /*target_offset=*/1 + uid / NumColors(),
                       /*color=*/uid % NumColors(), /*rank=*/-1);
   }
-  uid -= max_reveal_color_moves();
+  uid -= max_reveal_color_moves;
   return HanabiMove(HanabiMove::kRevealRank, /*card_index=*/-1,
                     /*target_offset=*/1 + uid / NumRanks(),
                     /*color=*/-1, /*rank=*/uid % NumRanks());
