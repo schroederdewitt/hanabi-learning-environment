@@ -90,7 +90,6 @@ int HanabiGame::GetMoveUid(HanabiMove move) const {
 int HanabiGame::GetMoveUid(HanabiMove::Type move_type, int card_index,
                            int target_offset, int color, int rank) const {
 
-  int max_moves = using_joint_obs_for_any_num_players_ ? MaxMovesAnyNumPlayers() : MaxMoves();
   int max_discard_moves = using_joint_obs_for_any_num_players_ ?
     MaxDiscardMovesAnyNumPlayers() : MaxDiscardMoves();
   int max_play_moves = using_joint_obs_for_any_num_players_ ?
@@ -199,7 +198,7 @@ HanabiMove HanabiGame::ConstructMove(int uid) const {
                       /*target_offset=*/-1, /*color=*/-1, /*rank=*/-1);
   }
   uid -= max_play_moves;
-  if (uid < MaxRevealColorMoves()) {
+  if (uid < max_reveal_color_moves) {
     return HanabiMove(HanabiMove::kRevealColor, /*card_index=*/-1,
                       /*target_offset=*/1 + uid / NumColors(),
                       /*color=*/uid % NumColors(), /*rank=*/-1);
