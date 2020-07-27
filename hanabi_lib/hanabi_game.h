@@ -43,6 +43,9 @@ class HanabiGame {
 
   // Number of different player moves.
   int MaxMoves() const;
+
+  int MaxMovesAnyNumPlayers() const;
+
   // Get a HanabiMove by unique id.
   HanabiMove GetMove(int uid) const { return moves_[uid]; }
   // Get unique id for a move. Returns -1 for invalid move.
@@ -101,6 +104,10 @@ class HanabiGame {
   int MaxPlayMoves() const { return hand_size_; }
   int MaxRevealColorMoves() const { return (num_players_ - 1) * num_colors_; }
   int MaxRevealRankMoves() const { return (num_players_ - 1) * num_ranks_; }
+  int MaxDiscardMovesAnyNumPlayers() const { return 5; }
+  int MaxPlayMovesAnyNumPlayers() const { return 5; }
+  int MaxRevealColorMovesAnyNumPlayers() const { return 4 * num_colors_; }
+  int MaxRevealRankMovesAnyNumPlayers() const { return 4 * num_ranks_; }
 
   int HandSizeFromRules() const;
   HanabiMove ConstructMove(int uid) const;
@@ -123,6 +130,8 @@ class HanabiGame {
   AgentObservationType observation_type_ = kCardKnowledge;
   int bomb_ = 0;
   mutable std::mt19937 rng_;
+
+  bool using_joint_obs_for_any_num_players_ = false;
 };
 
 }  // namespace hanabi_learning_env

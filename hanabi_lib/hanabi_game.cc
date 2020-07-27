@@ -46,6 +46,7 @@ HanabiGame::HanabiGame(
   observation_type_ = AgentObservationType(ParameterValue<int>(
       params_, "observation_type", AgentObservationType::kCardKnowledge));
   bomb_ = ParameterValue<int>(params_, "bomb", 0);
+  using_joint_obs_for_any_num_players_ = ParameterValue<bool>(params_, "using_joint_obs", false);
 
   while (seed_ == -1) {
     seed_ = std::random_device()();
@@ -69,8 +70,16 @@ HanabiGame::HanabiGame(
 }
 
 int HanabiGame::MaxMoves() const {
+  if (using_joint_obs_for_any_num_players_) {
+    return MaxMovesAnyNumPlayers();
+  }
   return MaxDiscardMoves() + MaxPlayMoves() + MaxRevealColorMoves() +
          MaxRevealRankMoves();
+}
+
+int HanabiGame::MaxMovesAnyNumPlayers() const {
+  return MaxDiscardMovesAnyNumPlayers() + MaxPlayMovesAnyNumPlayers() +
+         MaxRevealColorMovesAnyNumPlayers() + MaxRevealRankMovesAnyNumPlayers();
 }
 
 int HanabiGame::GetMoveUid(HanabiMove move) const {
@@ -80,16 +89,24 @@ int HanabiGame::GetMoveUid(HanabiMove move) const {
 
 int HanabiGame::GetMoveUid(HanabiMove::Type move_type, int card_index,
                            int target_offset, int color, int rank) const {
+
+  int max_discard_moves = using_joint_obs_for_any_num_players_ ?
+    MaxDiscardMovesAnyNumPlayers() : MaxDiscardMoves();
+  int max_play_moves = using_joint_obs_for_any_num_players_ ?
+    MaxPlayMovesAnyNumPlayers() : MaxPlayMoves();
+  int max_reveal_color_moves = using_joint_obs_for_any_num_players_ ?
+    MaxRevealColorMovesAnyNumPlayers() : MaxRevealColorMoves();
+
   switch (move_type) {
     case HanabiMove::kDiscard:
       return card_index;
     case HanabiMove::kPlay:
-      return MaxDiscardMoves() + card_index;
+      return max_discard_moves + card_index;
     case HanabiMove::kRevealColor:
-      return MaxDiscardMoves() + MaxPlayMoves() +
+      return max_discard_moves + max_play_moves +
              (target_offset - 1) * NumColors() + color;
     case HanabiMove::kRevealRank:
-      return MaxDiscardMoves() + MaxPlayMoves() + MaxRevealColorMoves() +
+      return max_discard_moves + max_play_moves + max_reveal_color_moves +
              (target_offset - 1) * NumRanks() + rank;
     default:
       return -1;
@@ -159,26 +176,34 @@ int HanabiGame::HandSizeFromRules() const {
 // 2h, 2h+(p-1)c-1: color hint
 // 2h+(p-1)c, 2h+(p-1)c+(p-1)r-1: rank hint
 HanabiMove HanabiGame::ConstructMove(int uid) const {
-  if (uid < 0 || uid >= MaxMoves()) {
+  int max_moves = using_joint_obs_for_any_num_players_ ? MaxMovesAnyNumPlayers() : MaxMoves();
+  int max_discard_moves = using_joint_obs_for_any_num_players_ ?
+    MaxDiscardMovesAnyNumPlayers() : MaxDiscardMoves();
+  int max_play_moves = using_joint_obs_for_any_num_players_ ?
+    MaxPlayMovesAnyNumPlayers() : MaxPlayMoves();
+  int max_reveal_color_moves = using_joint_obs_for_any_num_players_ ?
+    MaxRevealColorMovesAnyNumPlayers() : MaxRevealColorMoves();
+
+  if (uid < 0 || uid >= max_moves) {
     return HanabiMove(HanabiMove::kInvalid, /*card_index=*/-1,
                       /*target_offset=*/-1, /*color=*/-1, /*rank=*/-1);
   }
-  if (uid < MaxDiscardMoves()) {
+  if (uid < max_discard_moves) {
     return HanabiMove(HanabiMove::kDiscard, /*card_index=*/uid,
                       /*target_offset=*/-1, /*color=*/-1, /*rank=*/-1);
   }
-  uid -= MaxDiscardMoves();
-  if (uid < MaxPlayMoves()) {
+  uid -= max_discard_moves;
+  if (uid < max_play_moves) {
     return HanabiMove(HanabiMove::kPlay, /*card_index=*/uid,
                       /*target_offset=*/-1, /*color=*/-1, /*rank=*/-1);
   }
-  uid -= MaxPlayMoves();
-  if (uid < MaxRevealColorMoves()) {
+  uid -= max_play_moves;
+  if (uid < max_reveal_color_moves) {
     return HanabiMove(HanabiMove::kRevealColor, /*card_index=*/-1,
                       /*target_offset=*/1 + uid / NumColors(),
                       /*color=*/uid % NumColors(), /*rank=*/-1);
   }
-  uid -= MaxRevealColorMoves();
+  uid -= max_reveal_color_moves;
   return HanabiMove(HanabiMove::kRevealRank, /*card_index=*/-1,
                     /*target_offset=*/1 + uid / NumRanks(),
                     /*color=*/-1, /*rank=*/uid % NumRanks());
