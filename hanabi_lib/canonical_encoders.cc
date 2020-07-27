@@ -57,9 +57,12 @@ int CardIndex(int color,
   return color * num_ranks + rank;
 }
 
-int HandsSectionLength(const HanabiGame& game) {
-  return game.NumPlayers() * game.HandSize() * BitsPerCard(game) +
-         game.NumPlayers();
+int HandsSectionLength(const HanabiGame& game,
+                       bool using_joint_obs) {
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
+  int num_players = using_joint_obs ? 5 : game.NumPlayers();
+  return num_players * hand_size * BitsPerCard(game) +
+         num_players;
 }
 
 // Enocdes cards in all other player's hands (excluding our unknown hand),
@@ -74,11 +77,12 @@ int EncodeHands(const HanabiGame& game,
                 const std::vector<int>& order,
                 bool shuffle_color,
                 const std::vector<int>& color_permute,
-                std::vector<float>* encoding) {
+                std::vector<float>* encoding,
+                bool using_joint_obs) {
   int bits_per_card = BitsPerCard(game);
   int num_ranks = game.NumRanks();
   int num_players = game.NumPlayers();
-  int hand_size = game.HandSize();
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
 
   int offset = start_offset;
   const std::vector<HanabiHand>& hands = obs.Hands();
@@ -128,6 +132,9 @@ int EncodeHands(const HanabiGame& game,
       offset += (hand_size - num_cards) * bits_per_card;
     }
   }
+  if (using_joint_obs) {
+    offset += (5 - num_players) * hand_size * bits_per_card;
+  }
 
   // For each player, set a bit if their hand is missing a card.
   for (int player = 0; player < num_players; ++player) {
@@ -135,14 +142,21 @@ int EncodeHands(const HanabiGame& game,
       (*encoding)[offset + player] = 1;
     }
   }
-  offset += num_players;
+  if (using_joint_obs) {
+    offset += 5;
+  } else {
+    offset += num_players;
+  }
 
-  assert(offset - start_offset == HandsSectionLength(game));
+  assert(offset - start_offset == HandsSectionLength(game, using_joint_obs));
   return offset - start_offset;
 }
 
-int BoardSectionLength(const HanabiGame& game) {
-  return game.MaxDeckSize() - game.NumPlayers() * game.HandSize() +  // deck
+int BoardSectionLength(const HanabiGame& game,
+                       bool using_joint_obs) {
+  int hand_size = using_joint_obs ? 4 : game.HandSize();
+  int num_players = using_joint_obs ? 2 : game.NumPlayers();
+  return game.MaxDeckSize() - num_players * hand_size +  // deck
          game.NumColors() * game.NumRanks() +  // fireworks
          game.MaxInformationTokens() +         // info tokens
          game.MaxLifeTokens();                 // life tokens
@@ -163,11 +177,12 @@ int EncodeBoard(const HanabiGame& game,
                 bool shuffle_color,
                 // const std::vector<int>& color_permute,
                 const std::vector<int>& inv_color_permute,
-                std::vector<float>* encoding) {
+                std::vector<float>* encoding,
+                bool using_joint_obs) {
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
-  int num_players = game.NumPlayers();
-  int hand_size = game.HandSize();
+  int num_players = using_joint_obs ? 2 : game.NumPlayers();
+  int hand_size = using_joint_obs ? 4 : game.HandSize();
   int max_deck_size = game.MaxDeckSize();
 
   int offset = start_offset;
@@ -226,7 +241,7 @@ int EncodeBoard(const HanabiGame& game,
   }
   offset += game.MaxLifeTokens();
 
-  assert(offset - start_offset == BoardSectionLength(game));
+  assert(offset - start_offset == BoardSectionLength(game, using_joint_obs));
   return offset - start_offset;
 }
 
@@ -296,16 +311,17 @@ int EncodeLastAction_(const HanabiGame& game,
                       const std::vector<int>& order,
                       bool shuffle_color,
                       const std::vector<int>& color_permute,
-                      std::vector<float>* encoding) {
+                      std::vector<float>* encoding,
+                      bool using_joint_obs) {
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
-  int num_players = game.NumPlayers();
-  int hand_size = game.HandSize();
+  int num_players = using_joint_obs ? 5 : game.NumPlayers();
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
 
   int offset = start_offset;
   const HanabiHistoryItem* last_move = GetLastNonDealMove(obs.LastMoves());
   if (last_move == nullptr) {
-    offset += LastActionSectionLength(game);
+    offset += LastActionSectionLength(game, using_joint_obs);
   } else {
     HanabiMove::Type last_move_type = last_move->move.MoveType();
 
@@ -338,7 +354,7 @@ int EncodeLastAction_(const HanabiGame& game,
     if (last_move_type == HanabiMove::Type::kRevealColor ||
         last_move_type == HanabiMove::Type::kRevealRank) {
       int8_t observer_relative_target =
-          (last_move->player + last_move->move.TargetOffset()) % num_players;
+          (last_move->player + last_move->move.TargetOffset()) % game.NumPlayers();
       (*encoding)[offset + observer_relative_target] = 1;
     }
     offset += num_players;
@@ -421,8 +437,16 @@ int EncodeLastAction_(const HanabiGame& game,
   return offset - start_offset;
 }
 
-int CardKnowledgeSectionLength(const HanabiGame& game) {
-  return game.NumPlayers() * game.HandSize() *
+int CardKnowledgeSectionLength(const HanabiGame& game, bool using_joint_obs) {
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
+  return game.NumPlayers() * hand_size *
+         (BitsPerCard(game) + game.NumColors() + game.NumRanks());
+}
+
+int V0BeliefSectionLength(const HanabiGame& game, bool using_joint_obs) {
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
+  int num_players = using_joint_obs ? 5 : game.NumPlayers();
+  return num_players * hand_size *
          (BitsPerCard(game) + game.NumColors() + game.NumRanks());
 }
 
@@ -453,12 +477,13 @@ int EncodeCardKnowledge(const HanabiGame& game,
                         const std::vector<int>& order,
                         bool shuffle_color,
                         const std::vector<int>& color_permute,
-                        std::vector<float>* encoding) {
+                        std::vector<float>* encoding,
+                        bool using_joint_obs) {
   int bits_per_card = BitsPerCard(game);
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
   int num_players = game.NumPlayers();
-  int hand_size = game.HandSize();
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
 
   int offset = start_offset;
   const std::vector<HanabiHand>& hands = obs.Hands();
@@ -514,7 +539,7 @@ int EncodeCardKnowledge(const HanabiGame& game,
     }
   }
 
-  assert(offset - start_offset == CardKnowledgeSectionLength(game));
+  assert(offset - start_offset == CardKnowledgeSectionLength(game, using_joint_obs));
   return offset - start_offset;
 }
 
@@ -576,12 +601,13 @@ int EncodeV0Belief_(const HanabiGame& game,
                     bool shuffle_color,
                     const std::vector<int>& color_permute,
                     std::vector<float>* encoding,
-                    std::vector<int>* ret_card_count) {
+                    std::vector<int>* ret_card_count,
+                    bool using_joint_obs) {
   // int bits_per_card = BitsPerCard(game);
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
   int num_players = game.NumPlayers();
-  int hand_size = game.HandSize();
+  int hand_size = using_joint_obs ? 5 : game.HandSize();
 
   std::vector<int> card_count = ComputeCardCount(game, obs, shuffle_color, color_permute);
   if (ret_card_count != nullptr) {
@@ -590,7 +616,7 @@ int EncodeV0Belief_(const HanabiGame& game,
 
   // card knowledge
   const int len = EncodeCardKnowledge(
-      game, obs, start_offset, order, shuffle_color, color_permute, encoding);
+      game, obs, start_offset, order, shuffle_color, color_permute, encoding, using_joint_obs);
   const int player_offset = len / num_players;
   const int per_card_offset = len / hand_size / num_players;
   assert(per_card_offset == num_colors * num_ranks + num_colors + num_ranks);
@@ -626,31 +652,52 @@ int EncodeV0Belief_(const HanabiGame& game,
       }
     }
   }
-  return len;
+
+  int extra_padding = 0;
+  if (using_joint_obs) {
+    extra_padding = (5 - num_players) * hand_size * (BitsPerCard(game) + num_colors + num_ranks);
+  }
+
+  assert(len + extra_padding == V0BeliefSectionLength(game, using_joint_obs));
+  return len + extra_padding;
 }
 
 }  // namespace
 
-int LastActionSectionLength(const HanabiGame& game) {
-  return game.NumPlayers() +  // player id
+int LastActionSectionLength(const HanabiGame& game,
+                            bool using_joint_obs) {
+  int hand_size_ = using_joint_obs ? 5 : game.HandSize();
+  int num_players = using_joint_obs ? 5 : game.NumPlayers();
+  return num_players +        // player id
          4 +                  // move types (play, dis, rev col, rev rank)
-         game.NumPlayers() +  // target player id (if hint action)
+         num_players +        // target player id (if hint action)
          game.NumColors() +   // color (if hint action)
          game.NumRanks() +    // rank (if hint action)
-         game.HandSize() +    // outcome (if hint action)
-         game.HandSize() +    // position (if play action)
+         hand_size_ +         // outcome (if hint action)
+         hand_size_ +         // position (if play action)
          BitsPerCard(game) +  // card (if play or discard action)
          2;                   // play (successful, added information token)
 }
 
 std::vector<int> CanonicalObservationEncoder::Shape() const {
-  int l = HandsSectionLength(*parent_game_) +
-          BoardSectionLength(*parent_game_) +
+  int l = HandsSectionLength(*parent_game_, false) +
+          BoardSectionLength(*parent_game_, false) +
           DiscardSectionLength(*parent_game_) +
-          LastActionSectionLength(*parent_game_) +
+          LastActionSectionLength(*parent_game_, false) +
           (parent_game_->ObservationType() == HanabiGame::kMinimal
                ? 0
-               : CardKnowledgeSectionLength(*parent_game_));
+               : V0BeliefSectionLength(*parent_game_, false));
+  return {l};
+}
+
+std::vector<int> CanonicalObservationEncoder::ShapeJointObs() const {
+  int l = HandsSectionLength(*parent_game_, true) +
+          BoardSectionLength(*parent_game_, true) +
+          DiscardSectionLength(*parent_game_) +
+          LastActionSectionLength(*parent_game_, true) +
+          (parent_game_->ObservationType() == HanabiGame::kMinimal
+               ? 0
+               : V0BeliefSectionLength(*parent_game_, true));
   return {l};
 }
 
@@ -662,7 +709,7 @@ std::vector<float> CanonicalObservationEncoder::EncodeLastAction(
   std::vector<float> encoding(LastActionSectionLength(*parent_game_), 0);
   int offset = 0;
   offset += EncodeLastAction_(
-      *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding);
+      *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding, false);
   assert(offset == encoding.size());
   return encoding;
 }
@@ -702,6 +749,7 @@ std::vector<float> CanonicalObservationEncoder::Encode(
     const std::vector<int>& color_permute,
     const std::vector<int>& inv_color_permute,
     bool hide_action) const {
+
   // Make an empty bit string of the proper size.
   std::vector<float> encoding(FlatLength(Shape()), 0);
   // std::cout << "encoding shape: " << encoding.size() << std::endl;
@@ -716,20 +764,21 @@ std::vector<float> CanonicalObservationEncoder::Encode(
   int offset = 0;
 
   offset += EncodeHands(
-      *parent_game_, obs, offset, show_own_cards, order, shuffle_color, color_permute, &encoding);
+      *parent_game_, obs, offset, show_own_cards, order,
+      shuffle_color, color_permute, &encoding, false);
   offset += EncodeBoard(
-      *parent_game_, obs, offset, shuffle_color, inv_color_permute, &encoding);
+      *parent_game_, obs, offset, shuffle_color, inv_color_permute, &encoding, false);
   offset += EncodeDiscards(
       *parent_game_, obs, offset, shuffle_color, color_permute, &encoding);
   if (hide_action) {
-    offset += LastActionSectionLength(*parent_game_);
+    offset += LastActionSectionLength(*parent_game_, false);
   } else {
     offset += EncodeLastAction_(
-        *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding);
+        *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding, false);
   }
   if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
     offset += EncodeV0Belief_(
-        *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding, nullptr);
+        *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding, nullptr, false);
   }
 
   assert(offset == encoding.size());
@@ -826,6 +875,53 @@ std::vector<float> CanonicalObservationEncoder::EncodeAllHand(
 
   // std::cout << "offset: " << offset << ", len: " << len << std::endl;
   assert(offset == len);
+  return encoding;
+}
+
+
+std::vector<float> CanonicalObservationEncoder::EncodeJointFivePlayers(
+    const HanabiObservation& obs,
+    bool show_own_cards,
+    const std::vector<int>& order,
+    bool shuffle_color,
+    const std::vector<int>& color_permute,
+    const std::vector<int>& inv_color_permute,
+    bool hide_action) const {
+  // Make an empty bit string of the proper size.
+  std::vector<float> encoding(FlatLength(ShapeJointObs()), 0);
+
+  // This offset is an index to the start of each section of the bit vector.
+  // It is incremented at the end of each section.
+  int offset = 0;
+
+  offset += EncodeHands(
+      *parent_game_, obs, offset, show_own_cards, order,
+      shuffle_color, color_permute, &encoding, true);
+//  std::cerr << offset << std::endl;
+  offset += EncodeBoard(
+      *parent_game_, obs, offset, shuffle_color,
+      inv_color_permute, &encoding, true);
+//  std::cerr << offset << std::endl;
+  offset += EncodeDiscards(
+      *parent_game_, obs, offset, shuffle_color, color_permute, &encoding);
+//  std::cerr << offset << std::endl;
+  if (hide_action) {
+    offset += LastActionSectionLength(*parent_game_, true);
+  } else {
+    assert(false);    // Need to double check that this is correct, not being used right now
+    offset += EncodeLastAction_(
+        *parent_game_, obs, offset, order, shuffle_color,
+        color_permute, &encoding, true);
+  }
+//  std::cerr << offset << std::endl;
+  if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
+    offset += EncodeV0Belief_(
+        *parent_game_, obs, offset, order, shuffle_color,
+        color_permute, &encoding, nullptr, true);
+  }
+//  std::cerr << offset << std::endl;
+
+  assert(offset == encoding.size());
   return encoding;
 }
 
