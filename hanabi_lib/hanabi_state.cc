@@ -61,6 +61,7 @@ HanabiState::HanabiDeck::HanabiDeck(const HanabiGame& game)
       total_count_ += count;
     }
   }
+  full_deck_card_count_ = card_count_;
 }
 
 HanabiCard HanabiState::HanabiDeck::DealCard(std::mt19937* rng) {
