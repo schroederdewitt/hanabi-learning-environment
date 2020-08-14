@@ -740,7 +740,7 @@ std::vector<float> CanonicalObservationEncoder::EncodeOwnHandTrinary(
     const HanabiObservation& obs) const {
   // int len = parent_game_->HandSize() * BitsPerCard(*parent_game_);
   // hard code 5 cards, empty slot will be all zero
-  int len = 5 * 3;
+  int len = parent_game_->HandSize() * 3;
   std::vector<float> encoding(len, 0);
   int bits_per_card = 3; // BitsPerCard(game);
   int num_ranks = parent_game_->NumRanks();
