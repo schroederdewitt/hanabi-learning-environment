@@ -518,57 +518,6 @@ int EncodeCardKnowledge(const HanabiGame& game,
   return offset - start_offset;
 }
 
-std::vector<int> ComputeCardCount(const HanabiGame& game,
-                                  const HanabiObservation& obs,
-                                  bool shuffle_color,
-                                  const std::vector<int>& color_permute) {
-  int num_colors = game.NumColors();
-  int num_ranks = game.NumRanks();
-
-  std::vector<int> card_count(num_colors * num_ranks, 0);
-  int total_count = 0;
-  // full deck card count
-  for (int color = 0; color < game.NumColors(); ++color) {
-    for (int rank = 0; rank < game.NumRanks(); ++rank) {
-      auto count = game.NumberCardInstances(color, rank);
-      card_count[CardIndex(color, rank, num_ranks, shuffle_color, color_permute)] = count;
-      total_count += count;
-    }
-  }
-  // remove discard
-  for (const HanabiCard& card : obs.DiscardPile()) {
-    --card_count[CardIndex(card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute)];
-    --total_count;
-  }
-  // remove fireworks on board
-  const std::vector<int>& fireworks = obs.Fireworks();
-  for (int c = 0; c < num_colors; ++c) {
-    // fireworks[color] is the number of successfully played <color> cards.
-    // If some were played, one-hot encode the highest (0-indexed) rank played
-    if (fireworks[c] > 0) {
-      for (int rank = 0; rank < fireworks[c]; ++rank) {
-        --card_count[CardIndex(c, rank, num_ranks, shuffle_color, color_permute)];
-        --total_count;
-      }
-    }
-  }
-
-  {
-    // sanity check
-    const std::vector<HanabiHand>& hands = obs.Hands();
-    int total_hand_size = 0;
-    for (const auto& hand : hands) {
-      total_hand_size += hand.Cards().size();
-    }
-    if(total_count != obs.DeckSize() + total_hand_size) {
-      std::cout << "size mismatch: " << total_count
-                << " vs " << obs.DeckSize() + total_hand_size << std::endl;
-      assert(false);
-    }
-  }
-  return card_count;
-}
-
 int EncodeV0Belief_(const HanabiGame& game,
                     const HanabiObservation& obs,
                     int start_offset,
@@ -583,7 +532,9 @@ int EncodeV0Belief_(const HanabiGame& game,
   int num_players = game.NumPlayers();
   int hand_size = game.HandSize();
 
-  std::vector<int> card_count = ComputeCardCount(game, obs, shuffle_color, color_permute);
+  // compute public card count
+  std::vector<int> card_count = ComputeCardCount(
+      game, obs, shuffle_color, color_permute, true);
   if (ret_card_count != nullptr) {
     *ret_card_count = card_count;
   }
@@ -829,48 +780,73 @@ std::vector<float> CanonicalObservationEncoder::EncodeAllHand(
   return encoding;
 }
 
-// std::vector<std::vector<int>> CanonicalObservationEncoder::ComputePrivateCardCount(
-//     const HanabiObservation& obs,
-//     bool shuffle_color,
-//     const std::vector<int>& color_permute) const {
-//   std::vector<int> card_count = ComputeCardCount(
-//       *parent_game_, obs, shuffle_color, color_permute);
-//   std::vector<std::vector<int>> priv_card_count;
+std::vector<int> ComputeCardCount(
+    const HanabiGame& game,
+    const HanabiObservation& obs,
+    bool shuffle_color,
+    const std::vector<int>& color_permute,
+    bool publ) {
+  int num_colors = game.NumColors();
+  int num_ranks = game.NumRanks();
 
-//   int num_players = parent_game_->NumPlayers();
-//   int num_ranks = parent_game_->NumRanks();
-//   const std::vector<HanabiHand>& hands = obs.Hands();
-//   assert(num_players == 2);
+  std::vector<int> card_count(num_colors * num_ranks, 0);
+  int total_count = 0;
+  // full deck card count
+  for (int color = 0; color < game.NumColors(); ++color) {
+    for (int rank = 0; rank < game.NumRanks(); ++rank) {
+      auto count = game.NumberCardInstances(color, rank);
+      card_count[CardIndex(color, rank, num_ranks, shuffle_color, color_permute)] = count;
+      total_count += count;
+    }
+  }
+  // remove discard
+  for (const HanabiCard& card : obs.DiscardPile()) {
+    --card_count[CardIndex(card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute)];
+    --total_count;
+  }
 
-//   {
-//     // our dear partner
-//     int partner = 1;
-//     const std::vector<HanabiCard>& cards = hands[partner].Cards();
+  // remove firework
+  const std::vector<int>& fireworks = obs.Fireworks();
+  for (int c = 0; c < num_colors; ++c) {
+    // fireworks[color] is the number of successfully played <color> cards.
+    // If some were played, one-hot encode the highest (0-indexed) rank played
+    if (fireworks[c] > 0) {
+      for (int rank = 0; rank < fireworks[c]; ++rank) {
+        --card_count[CardIndex(c, rank, num_ranks, shuffle_color, color_permute)];
+        --total_count;
+      }
+    }
+  }
 
-//     for (const HanabiCard& card : cards) {
-//       auto card_idx = CardIndex(
-//           card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
-//       assert(card_count[card_idx] >= 1);
-//       --card_count[card_idx];
-//     }
-//   }
+  if (publ) {
+    return card_count;
+  }
 
-//   {
-//     int me = 0;
-//     const std::vector<HanabiCard>& cards = hands[me].Cards();
-//     // cc0
-//     priv_card_count.push_back(card_count);
-//     for (int i = 0; i < cards.size() - 1; ++i) {
-//       const auto& card = cards[i];
-//       auto card_idx = CardIndex(
-//           card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
-//       assert(card_count[card_idx] >= 1);
-//       --card_count[card_idx];
-//       priv_card_count.push_back(card_count);
-//     }
-//     assert(priv_card_count.size() == cards.size());
-//   }
-//   return priv_card_count;
-// }
+  // {
+  //   // sanity check
+  //   const std::vector<HanabiHand>& hands = obs.Hands();
+  //   int total_hand_size = 0;
+  //   for (const auto& hand : hands) {
+  //     total_hand_size += hand.Cards().size();
+  //   }
+  //   if(total_count != obs.DeckSize() + total_hand_size) {
+  //     std::cout << "size mismatch: " << total_count
+  //               << " vs " << obs.DeckSize() + total_hand_size << std::endl;
+  //     assert(false);
+  //   }
+  // }
+
+  // convert to private count
+  for (int i = 1; i < obs.Hands().size(); ++i) {
+    const auto& hand = obs.Hands()[i];
+    for (auto card : hand.Cards()) {
+      int index = CardIndex(card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
+      --card_count[index];
+      assert(card_count[index] >= 0);
+    }
+  }
+
+  return card_count;
+}
 
 }  // namespace hanabi_learning_env

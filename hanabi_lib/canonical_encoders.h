@@ -74,11 +74,6 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       bool shuffle_color,
       const std::vector<int>& color_permute) const;
 
-  // std::vector<std::vector<int>> ComputePrivateCardCount(
-  //   const HanabiObservation& obs,
-  //   bool shuffle_color,
-  //   const std::vector<int>& color_permute) const;
-
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;
   }
@@ -88,6 +83,13 @@ class CanonicalObservationEncoder : public ObservationEncoder {
 };
 
 int LastActionSectionLength(const HanabiGame& game);
+
+std::vector<int> ComputeCardCount(
+    const HanabiGame& game,
+    const HanabiObservation& obs,
+    bool shuffle_color,
+    const std::vector<int>& color_permute,
+    bool publ);
 
 }  // namespace hanabi_learning_env
 

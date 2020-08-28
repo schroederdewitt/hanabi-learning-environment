@@ -47,12 +47,24 @@ class HanabiState {
       return card_count_[CardToIndex(color, rank)];
     }
 
+    const std::vector<int>& CardCount() const {
+      return card_count_;
+    }
+
     void PutCardsBack(const std::vector<HanabiCard>& cards) {
       intervened_ = true;
       for (const auto& card : cards) {
         auto index = CardToIndex(card.Color(), card.Rank());
+        ++total_count_;
         ++card_count_[index];
         assert(card_count_[index] <= full_deck_card_count_[index]);
+      }
+    }
+
+    void DealCards(const std::vector<HanabiCard>& cards) {
+      intervened_ = true;
+      for (const auto& card : cards) {
+        DealCard(card.Color(), card.Rank());
       }
     }
 
@@ -137,9 +149,11 @@ class HanabiState {
   int LifeTokens() const { return life_tokens_; }
   int InformationTokens() const { return information_tokens_; }
   const std::vector<HanabiHand>& Hands() const { return hands_; }
+  std::vector<HanabiHand>& Hands() { return hands_; }
   const std::vector<int>& Fireworks() const { return fireworks_; }
   const HanabiGame* ParentGame() const { return parent_game_; }
   const HanabiDeck& Deck() const { return deck_; }
+  HanabiDeck& Deck() { return deck_; }
   // Get the discard pile (the element at the back is the most recent discard.)
   const std::vector<HanabiCard>& DiscardPile() const { return discard_pile_; }
   // Sequence of moves from beginning of game. Stored as <move, actor>.
