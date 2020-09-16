@@ -359,6 +359,18 @@ std::string HanabiState::ToString() const {
   return result;
 }
 
+std::string HanabiState::ToStringBasic() const {
+  std::string result;
+  result += "Life tokens: " + std::to_string(LifeTokens()) + "\n";
+  result += "Info tokens: " + std::to_string(InformationTokens()) + "\n";
+  result += "Fireworks: ";
+  for (int i = 0; i < ParentGame()->NumColors(); ++i) {
+    result += ColorIndexToChar(i);
+    result += std::to_string(fireworks_[i]) + " ";
+  }
+  return result;
+}
+
 int HanabiState::Score() const {
   int score = std::accumulate(fireworks_.begin(), fireworks_.end(), 0);
   if (LifeTokens() <= 0) {

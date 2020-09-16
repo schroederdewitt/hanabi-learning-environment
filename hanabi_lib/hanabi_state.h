@@ -144,6 +144,7 @@ class HanabiState {
   bool IsTerminal() const { return EndOfGameStatus() != kNotFinished; }
   int Score() const;
   std::string ToString() const;
+  std::string ToStringBasic() const;
 
   int CurPlayer() const { return cur_player_; }
   int LifeTokens() const { return life_tokens_; }
