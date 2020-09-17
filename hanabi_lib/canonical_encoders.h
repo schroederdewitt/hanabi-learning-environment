@@ -74,6 +74,9 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       bool shuffle_color,
       const std::vector<int>& color_permute) const;
 
+  std::tuple<std::vector<float>, std::vector<int>>
+  EncodePrivateV0Belief(const HanabiObservation& obs) const;
+
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;
   }
