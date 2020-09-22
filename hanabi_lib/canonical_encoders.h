@@ -77,6 +77,9 @@ class CanonicalObservationEncoder : public ObservationEncoder {
   std::tuple<std::vector<float>, std::vector<int>>
   EncodePrivateV0Belief(const HanabiObservation& obs) const;
 
+  std::vector<float> EncodeARV0Belief(
+    const HanabiObservation& obs) const;
+
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;
   }

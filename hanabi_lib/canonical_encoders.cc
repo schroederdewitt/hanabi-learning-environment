@@ -849,4 +849,79 @@ std::vector<int> ComputeCardCount(
   return card_count;
 }
 
+std::vector<float> CanonicalObservationEncoder::EncodeARV0Belief(
+    const HanabiObservation& obs) const {
+  auto& game = *parent_game_;
+    // const std::vector<int>& order,
+    // bool shuffle_color,
+    // const std::vector<int>& color_permute) {
+
+  // int bits_per_card = BitsPerCard(game);
+  int num_colors = game.NumColors();
+  int num_ranks = game.NumRanks();
+  int num_players = game.NumPlayers();
+  int hand_size = game.HandSize();
+
+  bool shuffle_color = false;
+  std::vector<int> color_permute;
+
+  std::vector<std::vector<int>> ar_card_counts;
+  {
+    // compute private card count
+    std::vector<int> card_count = ComputeCardCount(
+        game, obs, shuffle_color, color_permute, false);
+    auto& myCards = obs.Hands()[0].Cards();
+    auto ar_card_count = card_count;
+    for (int i = 0; i < myCards.size(); ++i) {
+      ar_card_counts.push_back(ar_card_count);
+      auto card = myCards[i];
+      int index = CardIndex(card.Color(), card.Rank(), num_ranks, shuffle_color, color_permute);
+      --ar_card_count[index];
+      assert(ar_card_count[index] >= 0);
+    }
+  }
+
+  int size = CardKnowledgeSectionLength(*parent_game_);
+  int myBeliefSize = size / parent_game_->NumPlayers();
+  std::vector<float> encoding(size);
+
+  // card knowledge
+  const int len = EncodeCardKnowledge(
+      game, obs, 0, std::vector<int>(), shuffle_color, color_permute, &encoding);
+  const int player_offset = len / num_players;
+  const int per_card_offset = len / hand_size / num_players;
+  assert(per_card_offset == num_colors * num_ranks + num_colors + num_ranks);
+
+  const std::vector<HanabiHand>& hands = obs.Hands();
+  int player_id = 0;
+  int num_cards = hands[player_id].Cards().size();
+  for (int card_idx = 0; card_idx < num_cards; ++card_idx) {
+    auto card_count = ar_card_counts[card_idx];
+    float total = 0;
+    for (int i = 0; i < num_colors * num_ranks; ++i) {
+      int offset = player_offset * player_id + card_idx * per_card_offset + i;
+      // std::cout << offset << ", " << len << std::endl;
+      assert(offset < len);
+      encoding[offset] *= card_count[i];
+      total += encoding[offset];
+    }
+    if (total <= 0) {
+      // const std::vector<HanabiHand>& hands = obs.Hands();
+      std::cout << hands[0].Cards().size() << std::endl;
+      std::cout << hands[1].Cards().size() << std::endl;
+      std::cout << "player idx: " <<  player_id
+                << ", card idx: " << card_idx << std::endl;
+      std::cout << "total = 0 " << std::endl;
+      assert(false);
+    }
+    for (int i = 0; i < num_colors * num_ranks; ++i) {
+      int offset = player_offset * player_id + card_idx * per_card_offset + i;
+      encoding[offset] /= total;
+    }
+  }
+
+  std::vector<float> ret(encoding.begin(), encoding.begin() + myBeliefSize);
+  return ret;
+}
+
 }  // namespace hanabi_learning_env
