@@ -624,7 +624,10 @@ std::vector<float> CanonicalObservationEncoder::EncodeLastAction(
 
 std::tuple<std::vector<float>, std::vector<int>>
 CanonicalObservationEncoder::EncodePrivateV0Belief(
-    const HanabiObservation& obs) const {
+    const HanabiObservation& obs,
+    const std::vector<int>& order,
+    bool shuffle_color,
+    const std::vector<int>& color_permute) const {
   int size = CardKnowledgeSectionLength(*parent_game_);
   int myBeliefSize = size / parent_game_->NumPlayers();
 
@@ -634,9 +637,9 @@ CanonicalObservationEncoder::EncodePrivateV0Belief(
       *parent_game_,
       obs,
       0,
-      std::vector<int>(),
-      false,
-      std::vector<int>(),
+      order,
+      shuffle_color,
+      color_permute,
       &encoding,
       &cardCount,
       false);

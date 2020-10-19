@@ -34,26 +34,14 @@ class CanonicalObservationEncoder : public ObservationEncoder {
 
   std::vector<int> Shape() const override;
 
-  // std::vector<float> Encode(const HanabiObservation&) const override {
-  //   // std::cerr << "Not Impled" << std::endl;
-  //   // throw std::logic_error("Function not yet implemented"); //assert(false);
-  //   // return std::vector<float>();
-  //   // // return Encode(obs, false, false);
-  //   return Encode(obs, false, {}, false, {}, {}, false);
-  // }
-
-  std::vector<float> Encode(const HanabiObservation& obs,
-                            bool show_own_cards,
-                            const std::vector<int>& order,
-                            bool shuffle_color,
-                            const std::vector<int>& color_permute,
-                            const std::vector<int>& inv_color_permute,
-                            bool hide_action) const;
-
-  // std::vector<float> EncodeV0Belief(const HanabiObservation& obs, bool all_player) const;
-  // std::vector<float> EncodeV1Belief(const HanabiObservation& obs, bool all_player) const;
-  // std::vector<float> EncodeHandMask(const HanabiObservation& obs) const;
-  // std::vector<float> EncodeCardCount(const HanabiObservation& obs) const;
+  std::vector<float> Encode(
+      const HanabiObservation& obs,
+      bool show_own_cards,
+      const std::vector<int>& order,
+      bool shuffle_color,
+      const std::vector<int>& color_permute,
+      const std::vector<int>& inv_color_permute,
+      bool hide_action) const;
 
   std::vector<float> EncodeLastAction(
       const HanabiObservation& obs,
@@ -75,7 +63,11 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       const std::vector<int>& color_permute) const;
 
   std::tuple<std::vector<float>, std::vector<int>>
-  EncodePrivateV0Belief(const HanabiObservation& obs) const;
+  EncodePrivateV0Belief(
+      const HanabiObservation& obs,
+      const std::vector<int>& order,
+      bool shuffle_color,
+      const std::vector<int>& color_permute) const;
 
   std::vector<float> EncodeARV0Belief(
     const HanabiObservation& obs) const;
