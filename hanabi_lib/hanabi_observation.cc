@@ -156,6 +156,11 @@ std::string HanabiObservation::ToString() const {
   for (int i = 0; i < discard_pile_.size(); ++i) {
     result += " " + discard_pile_[i].ToString();
   }
+  result += "\nLastMoves: \n";
+  for (int i = 0; i < LastMoves().size(); ++i) {
+    result += " " + LastMoves()[i].ToString() + "\n";
+  }
+
   return result;
 }
 

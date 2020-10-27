@@ -547,6 +547,7 @@ int EncodeV0Belief_(const HanabiGame& game,
   const int per_card_offset = len / hand_size / num_players;
   assert(per_card_offset == num_colors * num_ranks + num_colors + num_ranks);
 
+  auto ref_encoding = *encoding;
   const std::vector<HanabiHand>& hands = obs.Hands();
   for (int player_id = 0; player_id < num_players; ++player_id) {
     int num_cards = hands[player_id].Cards().size();
@@ -564,11 +565,38 @@ int EncodeV0Belief_(const HanabiGame& game,
       }
       if (total <= 0) {
         // const std::vector<HanabiHand>& hands = obs.Hands();
+        std::cout << "publ? " << publ << std::endl;
+        std::cout << "encoding size: " << encoding->size() << std::endl;
         std::cout << hands[0].Cards().size() << std::endl;
         std::cout << hands[1].Cards().size() << std::endl;
         std::cout << "player idx: " <<  player_id
-                  << ", card idx: " << card_idx << std::endl;
+                  << ", card idx: " << card_idx
+                  << ", hand: " << std::endl;
+        std::cout << hands[player_id].ToString()
+                  << std::endl;
         std::cout << "total = 0 " << std::endl;
+        std::cout << "card count" << std::endl;
+        for (size_t x = 0; x < num_colors * num_ranks; ++x) {
+          std::cout << card_count[x] << ", ";
+          if ((x+1) % 5 == 0) {
+            std::cout << std::endl;
+          }
+        }
+        std::cout << "ck" << std::endl;
+        for (size_t x = 0; x < num_colors * num_ranks; ++x) {
+          int offset = (start_offset
+                        + player_offset * player_id
+                        + card_idx * per_card_offset
+                        + x);
+          std::cout << ref_encoding[offset] << ", ";
+          if ((x+1) % 5 == 0) {
+            std::cout << std::endl;
+          }
+        }
+        std::cout << "Game Seed: " << game.Seed() << std::endl;
+        std::cout << "OBS:" << std::endl;
+        std::cout << obs.ToString() << std::endl;
+
         assert(false);
       }
       for (int i = 0; i < num_colors * num_ranks; ++i) {
