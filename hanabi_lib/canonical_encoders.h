@@ -70,7 +70,10 @@ class CanonicalObservationEncoder : public ObservationEncoder {
       const std::vector<int>& color_permute) const;
 
   std::vector<float> EncodeARV0Belief(
-    const HanabiObservation& obs) const;
+    const HanabiObservation& obs,
+    const std::vector<int>& order,
+    bool shuffle_color,
+    const std::vector<int>& color_permute) const;
 
   ObservationEncoder::Type type() const override {
     return ObservationEncoder::Type::kCanonical;

@@ -686,12 +686,6 @@ std::vector<float> CanonicalObservationEncoder::Encode(
     bool hide_action) const {
   // Make an empty bit string of the proper size.
   std::vector<float> encoding(FlatLength(Shape()), 0);
-  // std::cout << "encoding shape: " << encoding.size() << std::endl;
-  // std::cout << "rand order:" << std::endl;
-  // for (auto& a : order) {
-  //   std::cout << a << ", ";
-  // }
-  // std::cout << std::endl;
 
   // This offset is an index to the start of each section of the bit vector.
   // It is incremented at the end of each section.
@@ -720,7 +714,6 @@ std::vector<float> CanonicalObservationEncoder::Encode(
 
 std::vector<float> CanonicalObservationEncoder::EncodeOwnHandTrinary(
     const HanabiObservation& obs) const {
-  // int len = parent_game_->HandSize() * BitsPerCard(*parent_game_);
   // hard code 5 cards, empty slot will be all zero
   int len = parent_game_->HandSize() * 3;
   std::vector<float> encoding(len, 0);
@@ -739,8 +732,6 @@ std::vector<float> CanonicalObservationEncoder::EncodeOwnHandTrinary(
     assert(card.Color() < parent_game_->NumColors());
     assert(card.Rank() < num_ranks);
     assert(card.IsValid());
-    // std::cout << offset << CardIndex(card.Color(), card.Rank(), num_ranks) << std::endl;
-    // std::cout << card.Color() << ", " << card.Rank() << ", " << num_ranks << std::endl;
     auto firework = fireworks[card.Color()];
     if (card.Rank() == firework) {
       encoding[offset] = 1;
@@ -806,7 +797,6 @@ std::vector<float> CanonicalObservationEncoder::EncodeAllHand(
     offset += bits_per_card * (parent_game_->HandSize() - cards.size());
   }
 
-  // std::cout << "offset: " << offset << ", len: " << len << std::endl;
   assert(offset == len);
   return encoding;
 }
@@ -881,20 +871,15 @@ std::vector<int> ComputeCardCount(
 }
 
 std::vector<float> CanonicalObservationEncoder::EncodeARV0Belief(
-    const HanabiObservation& obs) const {
+    const HanabiObservation& obs,
+    const std::vector<int>& order,
+    bool shuffle_color,
+    const std::vector<int>& color_permute) const {
   auto& game = *parent_game_;
-    // const std::vector<int>& order,
-    // bool shuffle_color,
-    // const std::vector<int>& color_permute) {
-
-  // int bits_per_card = BitsPerCard(game);
   int num_colors = game.NumColors();
   int num_ranks = game.NumRanks();
   int num_players = game.NumPlayers();
   int hand_size = game.HandSize();
-
-  bool shuffle_color = false;
-  std::vector<int> color_permute;
 
   std::vector<std::vector<int>> ar_card_counts;
   {
@@ -918,7 +903,7 @@ std::vector<float> CanonicalObservationEncoder::EncodeARV0Belief(
 
   // card knowledge
   const int len = EncodeCardKnowledge(
-      game, obs, 0, std::vector<int>(), shuffle_color, color_permute, &encoding);
+      game, obs, 0, order, shuffle_color, color_permute, &encoding);
   const int player_offset = len / num_players;
   const int per_card_offset = len / hand_size / num_players;
   assert(per_card_offset == num_colors * num_ranks + num_colors + num_ranks);
