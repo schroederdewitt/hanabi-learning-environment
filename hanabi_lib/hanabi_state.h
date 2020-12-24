@@ -169,6 +169,10 @@ class HanabiState {
     parent_game_ = game;
   }
 
+  std::vector<HanabiCard> getDiscardPile(){
+    return discard_pile_;
+  }
+
  private:
   // Add card to table if possible, if not lose a life token.
   // Returns <scored,information_token_added>

@@ -131,6 +131,10 @@ class HanabiHand {
     cards_ = cards;
   }
 
+  std::vector<HanabiCard> getCards(){
+    return cards_;
+  }
+
   void AddCard(HanabiCard card, const CardKnowledge& initial_knowledge);
   // Remove card_index card from hand. Put in discard_pile if not nullptr
   // (pushes the card to the back of the discard_pile vector).

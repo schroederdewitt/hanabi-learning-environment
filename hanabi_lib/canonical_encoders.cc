@@ -687,6 +687,51 @@ std::vector<float> CanonicalObservationEncoder::Encode(
   return encoding;
 }
 
+  std::map<std::string, std::vector<float>> CanonicalObservationEncoder::EncodeFullState(const HanabiObservation& obs,
+                                                                                         const std::vector<int>& order,
+                                                                                         bool shuffle_color,
+                                                                                         const std::vector<int>& color_permute,
+                                                                                         const std::vector<int>& inv_color_permute,
+                                                                                         bool hide_action) const {
+    bool show_own_cards = true;
+    int offset = 0;
+    std::map<std::string, std::vector<float>> full_state;
+
+    std::vector<float> hands_encoding(HandsSectionLength(*parent_game_), 0);
+    EncodeHands(
+      *parent_game_, obs, offset, show_own_cards, order, shuffle_color, color_permute, &hands_encoding);
+    full_state["state::hands"] = hands_encoding;
+
+    std::vector<float> board_encoding(BoardSectionLength(*parent_game_), 0);
+    EncodeBoard(
+      *parent_game_, obs, offset, shuffle_color, inv_color_permute, &board_encoding);
+    full_state["state::board"] = board_encoding;
+
+    std::vector<float> discards_encoding(DiscardSectionLength(*parent_game_), 0);
+    EncodeDiscards(
+      *parent_game_, obs, offset, shuffle_color, color_permute, &discards_encoding);
+    full_state["state::discards"] = discards_encoding;
+
+    std::vector<float> last_action_encoding(LastActionSectionLength(*parent_game_), 0);
+    if (hide_action) {
+        // DO NOTHING
+    } else {
+        EncodeLastAction_(
+            *parent_game_, obs, offset, order, shuffle_color, color_permute, &last_action_encoding);
+    }
+    full_state["state::last_action"] = last_action_encoding;
+
+    std::vector<float> V0_encoding(CardKnowledgeSectionLength(*parent_game_), 0);
+    if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
+        EncodeV0Belief_(
+            *parent_game_, obs, offset, order, shuffle_color, color_permute, &V0_encoding, nullptr);
+    }
+    full_state["state::V0_belief"] = V0_encoding;
+
+    return full_state;
+  }
+
+
 std::vector<float> CanonicalObservationEncoder::EncodeOwnHandTrinary(
     const HanabiObservation& obs) const {
   // int len = parent_game_->HandSize() * BitsPerCard(*parent_game_);
