@@ -746,22 +746,22 @@ std::vector<float> CanonicalObservationEncoder::Encode(
     int offset = 0;
     std::map<std::string, std::vector<float>> full_state;
 
-    std::vector<float> hands_encoding(HandsSectionLength(*parent_game_), 0);
+    std::vector<float> hands_encoding(HandsSectionLength(*parent_game_, false), 0);
     EncodeHands(
       *parent_game_, obs, offset, show_own_cards, order, shuffle_color, color_permute, &hands_encoding);
     full_state["state::hands"] = hands_encoding;
 
-    std::vector<float> board_encoding(BoardSectionLength(*parent_game_), 0);
+    std::vector<float> board_encoding(BoardSectionLength(*parent_game_, false), 0);
     EncodeBoard(
       *parent_game_, obs, offset, shuffle_color, inv_color_permute, &board_encoding);
     full_state["state::board"] = board_encoding;
 
-    std::vector<float> discards_encoding(DiscardSectionLength(*parent_game_), 0);
+    std::vector<float> discards_encoding(DiscardSectionLength(*parent_game_, false), 0);
     EncodeDiscards(
       *parent_game_, obs, offset, shuffle_color, color_permute, &discards_encoding);
     full_state["state::discards"] = discards_encoding;
 
-    std::vector<float> last_action_encoding(LastActionSectionLength(*parent_game_), 0);
+    std::vector<float> last_action_encoding(LastActionSectionLength(*parent_game_, false), 0);
     if (hide_action) {
         // DO NOTHING
     } else {
@@ -770,7 +770,7 @@ std::vector<float> CanonicalObservationEncoder::Encode(
     }
     full_state["state::last_action"] = last_action_encoding;
 
-    std::vector<float> V0_encoding(CardKnowledgeSectionLength(*parent_game_), 0);
+    std::vector<float> V0_encoding(CardKnowledgeSectionLength(*parent_game_, false), 0);
     if (parent_game_->ObservationType() != HanabiGame::kMinimal) {
         EncodeV0Belief_(
             *parent_game_, obs, offset, order, shuffle_color, color_permute, &V0_encoding, nullptr);
