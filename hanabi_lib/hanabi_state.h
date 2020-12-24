@@ -47,42 +47,31 @@ class HanabiState {
       return card_count_[CardToIndex(color, rank)];
     }
 
-    void AddCards(const std::vector<HanabiCard>& cards, const HanabiGame& game) {
+    const std::vector<int>& CardCount() const {
+      return card_count_;
+    }
+
+    void PutCardsBack(const std::vector<HanabiCard>& cards) {
+      intervened_ = true;
       for (const auto& card : cards) {
         auto index = CardToIndex(card.Color(), card.Rank());
+        ++total_count_;
         ++card_count_[index];
-        if (card_count_[index]
-            > game.NumberCardInstances(card.Color(), card.Rank())) {
-          assert(false);
-        }
+        assert(card_count_[index] <= full_deck_card_count_[index]);
       }
     }
 
-    void RemoveCards(const std::vector<HanabiCard>& cards) {
+    void DealCards(const std::vector<HanabiCard>& cards) {
+      intervened_ = true;
       for (const auto& card : cards) {
-        auto index = CardToIndex(card.Color(), card.Rank());
-        --card_count_[index];
-        if (card_count_[index] < 0) {
-          assert(false);
-        }
+        DealCard(card.Color(), card.Rank());
       }
-    }
-
-    bool CanRemoveCards(const std::vector<HanabiCard>& cards) const {
-      auto card_count = card_count_;
-      for (const auto& card : cards) {
-        auto index = CardToIndex(card.Color(), card.Rank());
-        --card_count[index];
-        if (card_count[index] < 0) {
-          return false;
-        }
-      }
-      return true;
     }
 
     // NOTE: deck history may no longer be legal given we can clone
     // and reset deck, thus this function is disabled for now
     std::vector<std::string> DeckHistory(std::mt19937* rng) {
+      assert(!intervened_);
       // std::cout << "before dealing all: " << deck_history_.size() << std::endl;
       // deal all cards to finish a deck
       while (!Empty()) {
@@ -113,9 +102,11 @@ class HanabiState {
     // E.g., if card_count_[CardToIndex(card)] == 2, then there are two
     // instances of card remaining in the deck, available to be dealt out.
     std::vector<int> card_count_;
+    std::vector<int> full_deck_card_count_;
     int total_count_ = -1;  // Total number of cards available to be dealt out.
     int num_ranks_ = -1;    // From game.NumRanks(), used to map card to index.
     std::vector<int> deck_history_;
+    bool intervened_ = false;
   };
 
   enum EndOfGameType {
@@ -158,9 +149,11 @@ class HanabiState {
   int LifeTokens() const { return life_tokens_; }
   int InformationTokens() const { return information_tokens_; }
   const std::vector<HanabiHand>& Hands() const { return hands_; }
+  std::vector<HanabiHand>& Hands() { return hands_; }
   const std::vector<int>& Fireworks() const { return fireworks_; }
   const HanabiGame* ParentGame() const { return parent_game_; }
   const HanabiDeck& Deck() const { return deck_; }
+  HanabiDeck& Deck() { return deck_; }
   // Get the discard pile (the element at the back is the most recent discard.)
   const std::vector<HanabiCard>& DiscardPile() const { return discard_pile_; }
   // Sequence of moves from beginning of game. Stored as <move, actor>.
@@ -172,17 +165,12 @@ class HanabiState {
     return deck_.DeckHistory(parent_game_->rng());
   }
 
-  // void SetCardsForPlayer(int player, const std::vector<HanabiCard>& cards) {
-  //   auto& hand = hands_[player];
-  //   std::cout << "before: hand: " << hand.ToString() << std::endl;
-
-  //   deck_.AddCards(hand.Cards(), *parent_game_);
-  //   hand.SetCards(cards);
-  //   deck_.RemoveCards(hand.Cards());
-  // }
-
   void SetGame(const HanabiGame* game) {
     parent_game_ = game;
+  }
+
+  std::vector<HanabiCard> getDiscardPile(){
+    return discard_pile_;
   }
 
  private:

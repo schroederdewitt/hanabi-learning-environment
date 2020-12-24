@@ -111,25 +111,29 @@ class HanabiHand {
     return card_knowledge_;
   }
 
-  // bool CanSetCards(const std::vector<HanabiCard>& cards) const {
-  //   if (cards_.size() != cards.size()) {
-  //     return false;
-  //   }
+  bool CanSetCards(const std::vector<HanabiCard>& cards) const {
+    if (cards_.size() != cards.size()) {
+      return false;
+    }
 
-  //   for (size_t i = 0; i < cards.size(); ++i) {
-  //     const auto& card = cards[i];
-  //     const auto& knowledge = card_knowledge_[i];
-  //     if (!knowledge.IsCardPlausible(card.Color(), card.Rank())) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
+    for (size_t i = 0; i < cards.size(); ++i) {
+      const auto& card = cards[i];
+      const auto& knowledge = card_knowledge_[i];
+      if (!knowledge.IsCardPlausible(card.Color(), card.Rank())) {
+        return false;
+      }
+    }
+    return true;
+  }
 
-  // void SetCards(const std::vector<HanabiCard>& cards) {
-  //   assert(CanSetCards(cards));
-  //   cards_ = cards;
-  // }
+  void SetCards(const std::vector<HanabiCard>& cards) {
+    assert(CanSetCards(cards));
+    cards_ = cards;
+  }
+
+  std::vector<HanabiCard> getCards(){
+    return cards_;
+  }
 
   void AddCard(HanabiCard card, const CardKnowledge& initial_knowledge);
   // Remove card_index card from hand. Put in discard_pile if not nullptr

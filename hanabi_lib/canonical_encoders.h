@@ -19,6 +19,7 @@
 #define __CANONICAL_ENCODERS_H__
 
 #include <vector>
+#include <map>
 
 #include "hanabi_game.h"
 #include "hanabi_observation.h"
@@ -51,6 +52,13 @@ class CanonicalObservationEncoder : public ObservationEncoder {
                             const std::vector<int>& color_permute,
                             const std::vector<int>& inv_color_permute,
                             bool hide_action) const;
+
+  std::map<std::string, std::vector<float>> EncodeFullState(const HanabiObservation& obs,
+                                                         const std::vector<int>& order,
+                                                         bool shuffle_color,
+                                                         const std::vector<int>& color_permute,
+                                                         const std::vector<int>& inv_color_permute,
+                                                         bool hide_action) const;
 
   // std::vector<float> EncodeV0Belief(const HanabiObservation& obs, bool all_player) const;
   // std::vector<float> EncodeV1Belief(const HanabiObservation& obs, bool all_player) const;
@@ -93,12 +101,28 @@ class CanonicalObservationEncoder : public ObservationEncoder {
     return ObservationEncoder::Type::kCanonical;
   }
 
+  const HanabiGame* getParentGame() const {
+    return parent_game_;
+  }
+
+  int getHandsSectionLength() const {
+    return parent_game_->NumPlayers() * parent_game_->HandSize() * (parent_game_->NumColors() * parent_game_->NumRanks()) +
+         parent_game_->NumPlayers();
+  }
+
  private:
   const HanabiGame* parent_game_ = nullptr;
 };
 
 int LastActionSectionLength(const HanabiGame& game,
                             bool using_joint_obs = false);
+
+std::vector<int> ComputeCardCount(
+    const HanabiGame& game,
+    const HanabiObservation& obs,
+    bool shuffle_color,
+    const std::vector<int>& color_permute,
+    bool publ);
 
 }  // namespace hanabi_learning_env
 
