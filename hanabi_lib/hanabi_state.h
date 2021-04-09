@@ -170,6 +170,11 @@ class HanabiState {
     parent_game_ = game;
   }
 
+  void SetDeckOrder(const std::vector<HanabiCard>& cards) {
+    assert(deck_order_.empty());
+    deck_order_ = cards;
+  }
+
  private:
   // Add card to table if possible, if not lose a life token.
   // Returns <scored,information_token_added>
@@ -192,6 +197,8 @@ class HanabiState {
 
   const HanabiGame* parent_game_ = nullptr;
   HanabiDeck deck_;
+  // use the deck with a fixed order from last to first
+  std::vector<HanabiCard> deck_order_;
   // Back element of discard_pile_ is most recently discarded card.
   std::vector<HanabiCard> discard_pile_;
   std::vector<HanabiHand> hands_;

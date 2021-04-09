@@ -237,6 +237,11 @@ void HanabiState::ApplyMove(HanabiMove move) {
           card_knowledge.ApplyIsColorHint(move.Color());
           card_knowledge.ApplyIsRankHint(move.Rank());
         }
+        if (!deck_order_.empty()) {
+          auto card = deck_order_.back();
+          assert(move.Color() == card.Color() && move.Rank() == card.Rank());
+          deck_order_.pop_back();
+        }
         hands_[history.deal_to_player].AddCard(
             deck_.DealCard(move.Color(), move.Rank()),
             card_knowledge);
@@ -319,9 +324,19 @@ HanabiState::ChanceOutcomes() const {
   int max_outcome_uid = ParentGame()->MaxChanceOutcomes();
   for (int uid = 0; uid < max_outcome_uid; ++uid) {
     HanabiMove move = ParentGame()->GetChanceOutcome(uid);
-    if (MoveIsLegal(move)) {
+    if (!MoveIsLegal(move)) {
+      continue;
+    }
+    if (deck_order_.empty()) {
       rv.first.push_back(move);
       rv.second.push_back(ChanceOutcomeProb(move));
+    } else {
+      auto card = deck_order_.back();
+      if (move.Color() == card.Color() && move.Rank() == card.Rank()) {
+        rv.first.push_back(move);
+        rv.second.push_back(ChanceOutcomeProb(move));
+        assert(rv.second.back() > 0);
+      }
     }
   }
   return rv;
