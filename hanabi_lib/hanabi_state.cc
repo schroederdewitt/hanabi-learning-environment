@@ -401,6 +401,25 @@ int HanabiState::Score() const {
   return score;
 }
 
+int HanabiState::MaxPossibleScore() const {
+  int total_points = parent_game_->NumColors() * parent_game_->NumRanks();
+  std::vector<int> discard_count(total_points, 0);
+  for (const auto& c : discard_pile_) {
+    discard_count[deck_.CardToIndex(c.Color(), c.Rank())] += 1;
+  }
+  int num_ranks = parent_game_->NumRanks();
+  for (int color = 0; color < parent_game_->NumColors(); ++color) {
+    for (int rank = 0; rank < num_ranks; ++rank) {
+      int num_card = parent_game_->NumberCardInstances(color, rank);
+      if (discard_count[deck_.CardToIndex(color, rank)] == num_card) {
+        total_points -= (num_ranks - rank);
+        break;
+      }
+    }
+  }
+  return total_points;
+}
+
 HanabiState::EndOfGameType HanabiState::EndOfGameStatus() const {
   if (LifeTokens() < 1) {
     return kOutOfLifeTokens;

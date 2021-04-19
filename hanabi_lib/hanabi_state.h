@@ -91,10 +91,10 @@ class HanabiState {
       return deck;
     }
 
-   private:
     int CardToIndex(int color, int rank) const {
       return color * num_ranks_ + rank;
     }
+   private:
     int IndexToColor(int index) const { return index / num_ranks_; }
     int IndexToRank(int index) const { return index % num_ranks_; }
 
@@ -143,6 +143,7 @@ class HanabiState {
   EndOfGameType EndOfGameStatus() const;
   bool IsTerminal() const { return EndOfGameStatus() != kNotFinished; }
   int Score() const;
+  int MaxPossibleScore() const;
   std::string ToString() const;
   std::string ToStringBasic() const;
 
