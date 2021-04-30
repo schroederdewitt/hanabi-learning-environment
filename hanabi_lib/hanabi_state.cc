@@ -239,6 +239,7 @@ void HanabiState::ApplyMove(HanabiMove move) {
         }
         if (!deck_order_.empty()) {
           auto card = deck_order_.back();
+          (void)card;
           assert(move.Color() == card.Color() && move.Rank() == card.Rank());
           deck_order_.pop_back();
         }

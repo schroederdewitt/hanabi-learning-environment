@@ -178,9 +178,10 @@ class HanabiState {
     parent_game_ = game;
   }
 
-  void SetDeckOrder(const std::vector<HanabiCard>& cards) {
+  void SetDeckOrder(const std::vector<HanabiCardValue>& cards) {
     assert(deck_order_.empty());
-    deck_order_ = cards;
+    for (size_t i = 0; i < cards.size(); ++i)
+      deck_order_.push_back(HanabiCard(cards[i],(int)i));
   }
 
  private:
