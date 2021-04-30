@@ -107,6 +107,14 @@ class HanabiHand {
     return card_knowledge_;
   }
 
+  const std::vector<HanabiCardValue> CardValues() const {
+    std::vector<HanabiCardValue> ret(cards_.size());
+    for (size_t i = 0; i < cards_.size(); ++i) {
+      ret[i] = cards_[i].Value();
+    }
+    return ret;
+  }
+
   std::vector<CardKnowledge>& Knowledge_() {
     return card_knowledge_;
   }
@@ -129,6 +137,27 @@ class HanabiHand {
   void SetCards(const std::vector<HanabiCard>& cards) {
     assert(CanSetCards(cards));
     cards_ = cards;
+  }
+
+  bool CanSetCards(const std::vector<HanabiCardValue>& cards) const {
+    if (cards_.size() != cards.size()) {
+      return false;
+    }
+
+    for (size_t i = 0; i < cards.size(); ++i) {
+      const auto& card = cards[i];
+      const auto& knowledge = card_knowledge_[i];
+      if (!knowledge.IsCardPlausible(card.Color(), card.Rank())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void SetCards(const std::vector<HanabiCardValue>& cards) {
+    assert(CanSetCards(cards));
+    for (size_t i = 0; i < cards.size(); ++i)
+      cards_[i] = HanabiCard(cards[i],cards_[i].Id());
   }
 
   void AddCard(HanabiCard card, const CardKnowledge& initial_knowledge);

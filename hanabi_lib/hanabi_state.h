@@ -61,6 +61,13 @@ class HanabiState {
       }
     }
 
+    void DealCards(const std::vector<HanabiCardValue>& cards) {
+      intervened_ = true;
+      for (const auto& card : cards) {
+        DealCard(card.Color(), card.Rank());
+      }
+    }
+
     void DealCards(const std::vector<HanabiCard>& cards) {
       intervened_ = true;
       for (const auto& card : cards) {
