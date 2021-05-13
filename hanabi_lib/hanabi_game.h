@@ -101,6 +101,16 @@ class HanabiGame {
     return &rng_;
   }
 
+  int CardToIndex(HanabiCard card) const {
+    return card.Color() * num_ranks_ + card.Rank();
+  }
+
+  HanabiCard IndexToCard(int index) const {
+    int color = index / num_ranks_;
+    int rank = index % num_ranks_;
+    return HanabiCard(color, rank);
+  }
+
  private:
   // Calculating max moves by move type.
   int MaxDiscardMoves() const { return hand_size_; }
