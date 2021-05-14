@@ -69,6 +69,8 @@ HanabiHand::HanabiHand(const HanabiHand& hand, bool hide_cards,
                        bool hide_knowledge) {
   if (hide_cards) {
     cards_.resize(hand.cards_.size(), HanabiCard());
+    for (size_t i = 0; i < hand.cards_.size(); ++i)
+      cards_[i] = hand.cards_[i].HideValue();
   } else {
     cards_ = hand.cards_;
   }

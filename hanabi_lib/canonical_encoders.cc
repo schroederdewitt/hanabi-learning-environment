@@ -671,6 +671,7 @@ CanonicalObservationEncoder::EncodePrivateV0Belief(
       &encoding,
       &cardCount,
       false);
+  (void)codeLen;
   assert(codeLen == (int)encoding.size());
   std::vector<float> privateV0(encoding.begin(), encoding.begin() + myBeliefSize);
   return {privateV0, cardCount};
@@ -719,6 +720,7 @@ std::vector<float> CanonicalObservationEncoder::EncodeOwnHandTrinary(
   std::vector<float> encoding(len, 0);
   int bits_per_card = 3; // BitsPerCard(game);
   int num_ranks = parent_game_->NumRanks();
+  (void)num_ranks;
 
   int offset = 0;
   const std::vector<HanabiHand>& hands = obs.Hands();

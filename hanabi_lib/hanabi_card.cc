@@ -18,15 +18,22 @@
 
 namespace hanabi_learning_env {
 
-bool HanabiCard::operator==(const HanabiCard& other_card) const {
+bool HanabiCardValue::operator==(const HanabiCardValue& other_card) const {
   return other_card.Color() == Color() && other_card.Rank() == Rank();
 }
 
-std::string HanabiCard::ToString() const {
+std::string HanabiCardValue::ToString() const {
   if (!IsValid()) {
     return std::string("XX");
   }
   return std::string() + ColorIndexToChar(Color()) + RankIndexToChar(Rank());
+}
+
+std::string HanabiCard::ToString() const {
+  if (!IsValid()) {
+    return std::string("XXX");
+  }
+  return std::to_string(Id()) + ColorIndexToChar(Color()) + RankIndexToChar(Rank());
 }
 
 }  // namespace hanabi_learning_env

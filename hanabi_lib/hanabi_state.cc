@@ -75,7 +75,7 @@ HanabiCard HanabiState::HanabiDeck::DealCard(std::mt19937* rng) {
   --card_count_[index];
   --total_count_;
   deck_history_.push_back(index);
-  return HanabiCard(IndexToColor(index), IndexToRank(index));
+  return HanabiCard(IndexToColor(index), IndexToRank(index), total_count_);
 }
 
 HanabiCard HanabiState::HanabiDeck::DealCard(int color, int rank) {
@@ -87,7 +87,7 @@ HanabiCard HanabiState::HanabiDeck::DealCard(int color, int rank) {
   --card_count_[index];
   --total_count_;
   deck_history_.push_back(index);
-  return HanabiCard(IndexToColor(index), IndexToRank(index));
+  return HanabiCard(IndexToColor(index), IndexToRank(index), total_count_);
 }
 
 HanabiState::HanabiState(const HanabiGame* parent_game, int start_player)
@@ -239,6 +239,7 @@ void HanabiState::ApplyMove(HanabiMove move) {
         }
         if (!deck_order_.empty()) {
           auto card = deck_order_.back();
+          (void)card;
           assert(move.Color() == card.Color() && move.Rank() == card.Rank());
           deck_order_.pop_back();
         }
