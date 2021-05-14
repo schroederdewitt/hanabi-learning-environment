@@ -101,7 +101,7 @@ class HanabiGame {
     return &rng_;
   }
 
-  int CardToIndex(HanabiCard card) const {
+  int CardToIndex(const HanabiCardValue& card) const {
     return card.Color() * num_ranks_ + card.Rank();
   }
 
