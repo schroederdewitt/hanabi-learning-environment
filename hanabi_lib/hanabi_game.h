@@ -105,10 +105,10 @@ class HanabiGame {
     return card.Color() * num_ranks_ + card.Rank();
   }
 
-  HanabiCard IndexToCard(int index) const {
+  HanabiCardValue IndexToCard(int index) const {
     int color = index / num_ranks_;
     int rank = index % num_ranks_;
-    return HanabiCard(color, rank);
+    return HanabiCardValue(color, rank);
   }
 
  private:

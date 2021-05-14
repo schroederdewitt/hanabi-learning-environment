@@ -68,12 +68,12 @@ class HanabiState {
       }
     }
 
-    void DealCards(const std::vector<HanabiCard>& cards) {
-      intervened_ = true;
-      for (const auto& card : cards) {
-        DealCard(card.Color(), card.Rank());
-      }
-    }
+    // void DealCards(const std::vector<HanabiCard>& cards) {
+    //   intervened_ = true;
+    //   for (const auto& card : cards) {
+    //     DealCard(card.Color(), card.Rank());
+    //   }
+    // }
 
     // NOTE: deck history may no longer be legal given we can clone
     // and reset deck, thus this function is disabled for now
