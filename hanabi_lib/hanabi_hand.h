@@ -119,26 +119,6 @@ class HanabiHand {
     return card_knowledge_;
   }
 
-  // bool CanSetCards(const std::vector<HanabiCard>& cards) const {
-  //   if (cards_.size() != cards.size()) {
-  //     return false;
-  //   }
-
-  //   for (size_t i = 0; i < cards.size(); ++i) {
-  //     const auto& card = cards[i];
-  //     const auto& knowledge = card_knowledge_[i];
-  //     if (!knowledge.IsCardPlausible(card.Color(), card.Rank())) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
-
-  // void SetCards(const std::vector<HanabiCard>& cards) {
-  //   assert(CanSetCards(cards));
-  //   cards_ = cards;
-  // }
-
   bool CanSetCards(const std::vector<HanabiCardValue>& cards) const {
     if (cards_.size() != cards.size()) {
       return false;

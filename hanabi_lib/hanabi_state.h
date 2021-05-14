@@ -68,23 +68,14 @@ class HanabiState {
       }
     }
 
-    // void DealCards(const std::vector<HanabiCard>& cards) {
-    //   intervened_ = true;
-    //   for (const auto& card : cards) {
-    //     DealCard(card.Color(), card.Rank());
-    //   }
-    // }
-
     // NOTE: deck history may no longer be legal given we can clone
     // and reset deck, thus this function is disabled for now
     std::vector<std::string> DeckHistory(std::mt19937* rng) {
       assert(!intervened_);
-      // std::cout << "before dealing all: " << deck_history_.size() << std::endl;
       // deal all cards to finish a deck
       while (!Empty()) {
         DealCard(rng);
       }
-      // std::cout << "after dealing all: " << deck_history_.size() << std::endl;
       const char colornames[] = "abcde";
       std::vector<std::string> deck;
       for (auto i : deck_history_) {
