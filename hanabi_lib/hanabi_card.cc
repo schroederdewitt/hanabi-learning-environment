@@ -33,7 +33,7 @@ std::string HanabiCard::ToString() const {
   if (!IsValid()) {
     return std::string("XXX");
   }
-  return std::to_string(Id()) + ColorIndexToChar(Color()) + RankIndexToChar(Rank());
+  return std::to_string(Id()) + " " + ColorIndexToChar(Color()) + RankIndexToChar(Rank());
 }
 
 }  // namespace hanabi_learning_env
