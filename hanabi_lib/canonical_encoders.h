@@ -50,7 +50,16 @@ class CanonicalObservationEncoder : public ObservationEncoder {
                             const std::vector<int>& inv_color_permute,
                             bool hide_action) const;
 
-  // std::vector<float> EncodeV0Belief(const HanabiObservation& obs, bool all_player) const;
+  std::vector<float> EncodeV0Belief(
+                            const HanabiObservation& obs,
+                            bool show_own_cards,
+                            const std::vector<int>& order,
+                            bool shuffle_color,
+                            const std::vector<int>& color_permute,
+                            const std::vector<int>& inv_color_permute,
+                            bool hide_action) const;
+
+   // std::vector<float> EncodeV0Belief(const HanabiObservation& obs, bool all_player) const;
   // std::vector<float> EncodeV1Belief(const HanabiObservation& obs, bool all_player) const;
   // std::vector<float> EncodeHandMask(const HanabiObservation& obs) const;
   // std::vector<float> EncodeCardCount(const HanabiObservation& obs) const;

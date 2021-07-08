@@ -632,6 +632,7 @@ std::vector<float> ExtractBelief(const std::vector<float>& encoding,
     num_players = 1;
   }
 
+  // std::cout<<"GOO:"<<(num_players * hand_size * bits_per_card)<<"bpc:"<<bits_per_card<<std::endl;
   std::vector<float> belief(num_players * hand_size * bits_per_card);
   for (int i = 0; i < num_players; ++i) {
     for (int j = 0; j < hand_size; ++j) {
@@ -685,6 +686,23 @@ std::vector<float> CanonicalObservationEncoder::Encode(
 
   assert(offset == encoding.size());
   return encoding;
+}
+
+std::vector<float> CanonicalObservationEncoder::EncodeV0Belief(
+    const HanabiObservation& obs,
+    bool show_own_cards,
+    const std::vector<int>& order,
+    bool shuffle_color,
+    const std::vector<int>& color_permute,
+    const std::vector<int>& inv_color_permute,
+    bool hide_action) const {
+  std::vector<float> encoding(FlatLength({CardKnowledgeSectionLength(*parent_game_)}), 0);
+  int offset = 0;
+  offset += EncodeV0Belief_(
+        *parent_game_, obs, offset, order, shuffle_color, color_permute, &encoding, nullptr);
+  assert(offset == encoding.size());
+  auto belief = ExtractBelief(encoding, *parent_game_, false);
+  return belief;
 }
 
 std::vector<float> CanonicalObservationEncoder::EncodeOwnHandTrinary(
